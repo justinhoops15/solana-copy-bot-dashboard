@@ -209,8 +209,8 @@ function MinScoreRow({ value, wallets, onSave }) {
 const IOS_STEPS = [
   { n: 1, text: "Open this page in Safari (not Chrome or other browsers)" },
   { n: 2, text: "Tap the Share button at the bottom of Safari — the box with an arrow pointing up" },
-  { n: 3, text: "Scroll down in the share sheet and tap "Add to Home Screen"" },
-  { n: 4, text: "Tap "Add" in the top right — CopyTradeAI will appear on your home screen" },
+  { n: 3, text: "Scroll down in the share sheet and tap 'Add to Home Screen'" },
+  { n: 4, text: "Tap 'Add' in the top right — CopyTradeAI will appear on your home screen" },
   { n: 5, text: "Open the app from your home screen, then come back here to enable notifications" },
 ];
 
@@ -273,7 +273,7 @@ function InstallCard() {
           <div className="pwa-install-title">Install App</div>
           <div className="pwa-install-sub">
             {isAndroid
-              ? "Tap "Install" in the banner at the bottom of the screen, or use your browser's install option"
+              ? "Tap 'Install' in the banner at the bottom of the screen, or use your browser's install option"
               : "Use your browser's install option or look for the install prompt in the address bar"}
           </div>
         </div>
