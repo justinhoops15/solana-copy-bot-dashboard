@@ -30,26 +30,26 @@ function nextMonth(month) {
 function pnlColor(pnl) {
   if (pnl > 0) return "#4caf84";
   if (pnl < 0) return "#e05c5c";
-  return "#444444";
+  return "#888888";
 }
 
 function pnlBg(pnl, max) {
   if (!pnl || !max) return "transparent";
   const intensity = Math.min(Math.abs(pnl) / max, 1);
-  if (pnl > 0) return `rgba(76,175,132,${0.06 + intensity * 0.18})`;
-  return `rgba(224,92,92,${0.06 + intensity * 0.18})`;
+  if (pnl > 0) return `rgba(76,175,132,${0.07 + intensity * 0.2})`;
+  return `rgba(224,92,92,${0.07 + intensity * 0.2})`;
 }
 
 // ── Day cell ───────────────────────────────────────────────────────────────
 function DayCell({ day, dayData, maxAbsPnl, selected, onClick }) {
-  const empty = !dayData;
+  const hasTrades = !!dayData;
   return (
     <div
-      className={"cal-day" + (empty ? " cal-day--empty" : "") + (selected ? " cal-day--selected" : "")}
+      className={"cal-day" + (hasTrades ? " cal-day--has-data" : "") + (selected ? " cal-day--selected" : "")}
       style={{ background: pnlBg(dayData?.pnl, maxAbsPnl) }}
-      onClick={empty ? undefined : onClick}
+      onClick={hasTrades ? onClick : undefined}
     >
-      <span className="cal-day-num">{day}</span>
+      <span className="cal-day-num" style={{ color: hasTrades ? "#ffffff" : "#666666" }}>{day}</span>
       {dayData && (
         <>
           <span className="cal-day-pnl" style={{ color: pnlColor(dayData.pnl) }}>
@@ -65,7 +65,8 @@ function DayCell({ day, dayData, maxAbsPnl, selected, onClick }) {
 // ── Slide-up day panel ─────────────────────────────────────────────────────
 function DayPanel({ day, month, dayData, onClose }) {
   if (!dayData) return null;
-  const label = new Date(month.replace("-", "/") + "/" + String(day).padStart(2, "0"))
+  const [y, m] = month.split("-").map(Number);
+  const label = new Date(y, m - 1, day)
     .toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
   return (
     <div className="cal-panel">
@@ -111,9 +112,9 @@ export default function Calendar() {
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
-  const [month, setMonth]     = useState(currentMonth);
-  const [data, setData]       = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [month, setMonth]       = useState(currentMonth);
+  const [data, setData]         = useState(null);
+  const [loading, setLoading]   = useState(true);
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
@@ -131,7 +132,6 @@ export default function Calendar() {
 
   const { days = {}, daysInMonth = 31, firstDayOfWeek = 0, summary = {} } = data || {};
 
-  // Build grid cells: leading blanks + days
   const cells = [];
   for (let i = 0; i < firstDayOfWeek; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
@@ -162,7 +162,8 @@ export default function Calendar() {
           <span className="cal-summary-lbl">Trades</span>
         </div>
         <div className="cal-summary-stat">
-          <span className="cal-summary-val" style={{ color: (summary.winRate || 0) >= 50 ? "#4caf84" : "#e05c5c" }}>
+          <span className="cal-summary-val"
+            style={{ color: (summary.winRate || 0) >= 50 ? "#4caf84" : (summary.winRate || 0) > 0 ? "#e05c5c" : "#ffffff" }}>
             {summary.winRate || 0}%
           </span>
           <span className="cal-summary-lbl">Win Rate</span>

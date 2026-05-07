@@ -5,16 +5,79 @@ import TradeHistory from "./components/TradeHistory";
 import Settings     from "./components/Settings";
 import Performance  from "./components/Performance";
 import Calendar     from "./components/Calendar";
-import { getStatus } from "./api/botApi";
+import { getStatus, getPerformance } from "./api/botApi";
 
 const TABS = [
-  { id: "leaderboard",  label: "Leaderboard"  },
+  { id: "leaderboard",  label: "Wallets"       },
   { id: "positions",    label: "Positions"     },
   { id: "performance",  label: "Performance"   },
   { id: "calendar",     label: "PnL Calendar"  },
   { id: "history",      label: "Trade History" },
   { id: "settings",     label: "Settings"      },
 ];
+
+// Tabs that show the global stats bar
+const STATS_TABS = new Set(["positions", "performance", "history"]);
+
+// ── Global Stats Bar ───────────────────────────────────────────────────────
+function GlobalStatsBar({ tab, botStatus }) {
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    if (!STATS_TABS.has(tab)) return;
+    const load = () =>
+      getPerformance("today")
+        .then((d) => setStats(d.stats))
+        .catch(() => {});
+    load();
+    const id = setInterval(load, 30000);
+    return () => clearInterval(id);
+  }, [tab]);
+
+  if (!STATS_TABS.has(tab)) return null;
+
+  const s = stats || { netPnl: 0, total: 0, winRate: 0 };
+  const pnlPos = (s.netPnl || 0) >= 0;
+  const online  = botStatus?.ok ?? false;
+
+  return (
+    <div className="stats-bar">
+      <div className="container">
+        <div className="stats-bar-inner">
+          <div className="stats-bar-item">
+            <span className="stats-bar-val" style={{ color: pnlPos ? "#4caf84" : "#e05c5c" }}>
+              {pnlPos ? "+" : ""}${(s.netPnl || 0).toFixed(2)}
+            </span>
+            <span className="stats-bar-lbl">Today's PnL</span>
+          </div>
+          <div className="stats-bar-sep" />
+          <div className="stats-bar-item">
+            <span className="stats-bar-val">{s.total || 0}</span>
+            <span className="stats-bar-lbl">Trades Today</span>
+          </div>
+          <div className="stats-bar-sep" />
+          <div className="stats-bar-item">
+            <span className="stats-bar-val"
+              style={{ color: (s.winRate || 0) >= 50 ? "#4caf84" : (s.winRate || 0) > 0 ? "#f5a623" : "#ffffff" }}>
+              {(s.winRate || 0).toFixed(0)}%
+            </span>
+            <span className="stats-bar-lbl">Win Rate Today</span>
+          </div>
+          <div className="stats-bar-sep" />
+          <div className="stats-bar-item">
+            <div className="stats-bar-status">
+              <div className={"status-dot" + (online ? " online" : " offline")} />
+              <span className="stats-bar-val" style={{ fontSize: 13 }}>
+                {online ? "Online" : "Offline"}
+              </span>
+            </div>
+            <span className="stats-bar-lbl">Bot Status</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ── PWA install banner ─────────────────────────────────────────────────────
 let _deferredPrompt = null;
@@ -115,6 +178,8 @@ export default function App() {
             </div>
           </div>
         </nav>
+
+        <GlobalStatsBar tab={tab} botStatus={status} />
 
         <main className="main">
           <div className="container">
