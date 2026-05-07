@@ -294,3 +294,199 @@ body {
 .risk-badge--low  { color: #4caf84; background: rgba(76,175,132,0.12);  border: 1px solid rgba(76,175,132,0.22); }
 .risk-badge--med  { color: #f5a623; background: rgba(245,166,35,0.12);  border: 1px solid rgba(245,166,35,0.22); }
 .risk-badge--high { color: #e05c5c; background: rgba(224,92,92,0.12);   border: 1px solid rgba(224,92,92,0.22); }
+
+/* ── Leaderboard — pin button + badges ───────────────────────────────────── */
+.lb-col-head      { grid-template-columns: 28px 170px 1fr 72px 90px 120px 120px; }
+.wallet-row       { grid-template-columns: 28px 170px 1fr 72px 90px 120px 120px; }
+.wallet-addr-col  { display: flex; flex-direction: column; gap: 3px; }
+.badge-auto {
+  display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: 0.07em;
+  text-transform: uppercase; color: #22d3ee; background: rgba(34,211,238,0.1);
+  border: 1px solid rgba(34,211,238,0.2); padding: 1px 5px; border-radius: 3px;
+  width: fit-content;
+}
+.badge-pinned {
+  display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: 0.07em;
+  text-transform: uppercase; color: #f5a623; background: rgba(245,166,35,0.1);
+  border: 1px solid rgba(245,166,35,0.2); padding: 1px 5px; border-radius: 3px;
+  width: fit-content;
+}
+.btn-pin {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; flex-shrink: 0;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 5px; cursor: pointer; font-size: 12px;
+  transition: background 0.15s; opacity: 0.5;
+}
+.btn-pin:hover  { background: rgba(255,255,255,0.08); opacity: 1; }
+.btn-pin.pinned { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.25); opacity: 1; }
+
+/* ── Performance tab ─────────────────────────────────────────────────────── */
+.perf-period-filter { display: flex; gap: 4px; }
+.perf-period-btn {
+  padding: 6px 14px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+  color: #555555; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 5px; cursor: pointer; transition: all 0.15s;
+}
+.perf-period-btn:hover  { color: #999; border-color: rgba(255,255,255,0.1); }
+.perf-period-btn.active { color: #ffffff; background: rgba(124,58,237,0.15); border-color: rgba(124,58,237,0.3); }
+
+.perf-stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px; margin-bottom: 12px;
+}
+.perf-stat-card {
+  background: #080808; border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 8px; padding: 16px 18px;
+}
+.perf-stat-card--ring { display: flex; flex-direction: column; align-items: center; padding: 16px 18px 12px; }
+.perf-win-ring-wrap   { line-height: 0; }
+.perf-stat-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.09em; color: #444444; margin-bottom: 8px; }
+.perf-stat-value { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.perf-stat-sub   { font-size: 11px; color: #555555; margin-top: 4px; font-family: 'Courier New', monospace; }
+
+.perf-chart-card {
+  background: #080808; border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 8px; padding: 20px; margin-bottom: 12px;
+}
+.perf-chart-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #444444; margin-bottom: 14px; }
+
+.perf-trade-head {
+  display: grid; grid-template-columns: 80px 90px 70px 1fr 70px 90px;
+  gap: 12px; padding: 12px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.08em; color: #444444;
+}
+.perf-trade-row {
+  display: grid; grid-template-columns: 80px 90px 70px 1fr 70px 90px;
+  gap: 12px; padding: 11px 20px; align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  transition: background 0.1s;
+}
+.perf-trade-row:last-child { border-bottom: none; }
+.perf-trade-row:hover { background: rgba(255,255,255,0.015); }
+.perf-trade-symbol { font-family: 'Courier New', monospace; font-size: 12px; color: #cccccc; }
+.perf-trade-wallet { font-family: 'Courier New', monospace; font-size: 11px; color: #444444; }
+.perf-trade-dur    { font-size: 11px; color: #444444; text-align: right; font-variant-numeric: tabular-nums; }
+.perf-trade-time   { font-size: 11px; color: #333333; font-variant-numeric: tabular-nums; }
+.perf-show-more {
+  display: block; width: 100%; padding: 14px; text-align: center;
+  font-size: 12px; color: #444444; background: none; border: none;
+  border-top: 1px solid rgba(255,255,255,0.04); cursor: pointer; transition: color 0.15s;
+}
+.perf-show-more:hover { color: #888; }
+
+/* ── Chart tooltip ───────────────────────────────────────────────────────── */
+.chart-tooltip {
+  background: #0e0e12; border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 7px; padding: 10px 14px; min-width: 160px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+}
+.chart-tooltip-date { font-size: 11px; color: #666; margin-bottom: 6px; }
+.chart-tooltip-row  { display: flex; justify-content: space-between; gap: 16px; font-size: 12px; margin-top: 3px; }
+
+/* ── Calendar tab ────────────────────────────────────────────────────────── */
+.cal-nav        { display: flex; align-items: center; gap: 12px; }
+.cal-nav-btn {
+  width: 30px; height: 30px; background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07); border-radius: 5px;
+  color: #888; cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.cal-nav-btn:hover:not(:disabled) { background: rgba(255,255,255,0.08); color: #fff; }
+.cal-nav-btn:disabled { opacity: 0.3; cursor: default; }
+.cal-nav-label { font-size: 14px; font-weight: 600; color: #cccccc; min-width: 140px; text-align: center; }
+
+.cal-summary {
+  display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.cal-summary-stat {
+  background: #080808; border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 7px; padding: 12px 18px; flex: 1; min-width: 100px;
+}
+.cal-summary-val { display: block; font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.cal-summary-lbl { font-size: 10px; color: #444; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 3px; display: block; }
+
+.cal-dow-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 4px; }
+.cal-dow     { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: #333; text-align: center; padding: 6px 0; }
+
+.cal-grid    { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-day {
+  background: #080808; border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 6px; padding: 8px; min-height: 72px;
+  display: flex; flex-direction: column; gap: 3px;
+  cursor: pointer; transition: border-color 0.15s;
+}
+.cal-day:hover:not(.cal-day--empty):not(.cal-day--blank) { border-color: rgba(255,255,255,0.1); }
+.cal-day--blank { background: transparent; border-color: transparent; pointer-events: none; }
+.cal-day--empty { cursor: default; opacity: 0.4; }
+.cal-day--selected { border-color: rgba(124,58,237,0.4) !important; }
+.cal-day-num    { font-size: 11px; font-weight: 600; color: #444; }
+.cal-day-pnl    { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.cal-day-trades { font-size: 9px; color: #444; }
+
+.cal-panel {
+  background: #080808; border: 1px solid rgba(124,58,237,0.25);
+  border-radius: 8px; padding: 20px; margin-top: 12px;
+  animation: slideUp 0.2s ease;
+}
+@keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.cal-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.cal-panel-date   { font-size: 14px; font-weight: 600; color: #cccccc; }
+.cal-panel-close  {
+  width: 26px; height: 26px; background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07); border-radius: 5px;
+  color: #666; cursor: pointer; font-size: 11px;
+  display: flex; align-items: center; justify-content: center;
+}
+.cal-panel-close:hover { color: #ccc; }
+.cal-panel-stats { display: flex; gap: 24px; margin-bottom: 16px; }
+.cal-panel-stat  { display: flex; flex-direction: column; gap: 3px; }
+.cal-panel-stat-val { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.cal-panel-stat-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #444; }
+.cal-panel-trades   { display: flex; flex-direction: column; gap: 4px; }
+.cal-panel-trade-row {
+  display: flex; gap: 16px; align-items: center; padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.cal-panel-trade-row:last-child { border-bottom: none; }
+.cal-panel-trade-sym { font-family: 'Courier New', monospace; font-size: 12px; color: #cccccc; flex: 1; }
+
+/* ── PWA install banner ───────────────────────────────────────────────────── */
+.install-banner {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+  background: #0e0e12; border-top: 1px solid rgba(124,58,237,0.3);
+  padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+  backdrop-filter: blur(12px);
+  animation: slideUp 0.3s ease;
+}
+.install-banner-text  { flex: 1; font-size: 13px; color: #cccccc; }
+.install-banner-btn {
+  padding: 8px 18px; font-size: 12px; font-weight: 600;
+  background: #7c3aed; color: #fff; border: none; border-radius: 6px; cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+.install-banner-btn:hover { box-shadow: 0 0 18px rgba(124,58,237,0.5); }
+.install-banner-close {
+  width: 28px; height: 28px; background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 5px;
+  color: #666; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+}
+
+/* ── Notification toggle ──────────────────────────────────────────────────── */
+.notif-toggle {
+  width: 40px; height: 22px; border-radius: 11px;
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
+  cursor: pointer; position: relative; transition: background 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+.notif-toggle.on { background: rgba(76,175,132,0.25); border-color: rgba(76,175,132,0.4); }
+.notif-toggle-thumb {
+  position: absolute; top: 2px; left: 2px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: #555; transition: left 0.2s, background 0.2s;
+}
+.notif-toggle.on .notif-toggle-thumb { left: 20px; background: #4caf84; }

@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
-import { getSettings, updateSetting, getWallet, getWallets, getStatus } from "../api/botApi";
+import {
+  getSettings, updateSetting, getWallet, getWallets, getStatus,
+  getNotifSettings, updateNotifSetting, subscribeNotif, unsubscribeNotif,
+  testNotification, getVapidKey,
+} from "../api/botApi";
 
 // ── Wallet Status Card ─────────────────────────────────────────────────────
 
@@ -49,8 +53,8 @@ function WalletStatusCard({ wallet, paperMode }) {
 
 function PositionSizeRow({ value, wallet, onSave }) {
   const defaultVal = parseFloat(value) || 0.1;
-  const [raw, setRaw]     = useState(String(defaultVal));  // string state for input display
-  const [num, setNum]     = useState(defaultVal);          // parsed number for previews/slider
+  const [raw, setRaw]     = useState(String(defaultVal));
+  const [num, setNum]     = useState(defaultVal);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -69,9 +73,7 @@ function PositionSizeRow({ value, wallet, onSave }) {
 
   const commit = (str) => {
     const n = Math.min(maxSol, Math.max(minSol, parseFloat(str) || minSol));
-    setNum(n);
-    setRaw(String(n));
-    return n;
+    setNum(n); setRaw(String(n)); return n;
   };
 
   const handleSave = async () => {
@@ -94,17 +96,9 @@ function PositionSizeRow({ value, wallet, onSave }) {
         )}
         <div className="settings-slider-wrap">
           <input
-            type="range"
-            className="sol-slider"
-            min={minSol}
-            max={maxSol}
-            step={0.01}
-            value={Math.min(num, maxSol)}
-            onChange={(e) => {
-              const n = parseFloat(e.target.value);
-              setNum(n);
-              setRaw(String(n));
-            }}
+            type="range" className="sol-slider"
+            min={minSol} max={maxSol} step={0.01} value={Math.min(num, maxSol)}
+            onChange={(e) => { const n = parseFloat(e.target.value); setNum(n); setRaw(String(n)); }}
             style={{ "--fill": fillPct + "%" }}
           />
           <div className="settings-slider-labels">
@@ -112,19 +106,12 @@ function PositionSizeRow({ value, wallet, onSave }) {
             <span>{maxSol.toFixed(2)} SOL{wallet?.solBalance > 0 ? "" : " (default)"}</span>
           </div>
         </div>
-        <div className="settings-hint-green">
-          {num.toFixed(2)} SOL = ${usdVal} USD per trade
-        </div>
-        <div className="settings-hint-muted">
-          Recommended: ${safeMin} – ${safeMax} per trade (5–10% of wallet)
-        </div>
+        <div className="settings-hint-green">{num.toFixed(2)} SOL = ${usdVal} USD per trade</div>
+        <div className="settings-hint-muted">Recommended: ${safeMin} – ${safeMax} per trade (5–10% of wallet)</div>
       </div>
       <div className="settings-control">
         <div className="settings-input-wrap">
-          <input
-            type="text"
-            inputMode="decimal"
-            className="settings-input"
+          <input type="text" inputMode="decimal" className="settings-input"
             value={raw}
             onChange={(e) => setRaw(e.target.value)}
             onFocus={(e) => e.target.select()}
@@ -150,17 +137,14 @@ function TakeProfitRow({ value, onSave }) {
 
   useEffect(() => {
     const n = parseFloat(value) || 50;
-    setRaw(String(n));
-    setNum(n);
+    setRaw(String(n)); setNum(n);
   }, [value]);
 
   const resultOf100 = (100 * (1 + num / 100)).toFixed(2);
 
   const commit = (str) => {
     const n = Math.max(1, parseFloat(str) || 1);
-    setNum(n);
-    setRaw(String(n));
-    return n;
+    setNum(n); setRaw(String(n)); return n;
   };
 
   const handleSave = async () => {
@@ -180,10 +164,7 @@ function TakeProfitRow({ value, onSave }) {
       </div>
       <div className="settings-control">
         <div className="settings-input-wrap">
-          <input
-            type="text"
-            inputMode="decimal"
-            className="settings-input"
+          <input type="text" inputMode="decimal" className="settings-input"
             value={raw}
             onChange={(e) => setRaw(e.target.value)}
             onFocus={(e) => e.target.select()}
@@ -209,17 +190,14 @@ function StopLossRow({ value, positionUsd, onSave }) {
 
   useEffect(() => {
     const n = parseFloat(value) || 20;
-    setRaw(String(n));
-    setNum(n);
+    setRaw(String(n)); setNum(n);
   }, [value]);
 
   const maxLoss = (positionUsd * num / 100).toFixed(2);
 
   const commit = (str) => {
     const n = Math.min(100, Math.max(1, parseFloat(str) || 1));
-    setNum(n);
-    setRaw(String(n));
-    return n;
+    setNum(n); setRaw(String(n)); return n;
   };
 
   const handleSave = async () => {
@@ -239,10 +217,7 @@ function StopLossRow({ value, positionUsd, onSave }) {
       </div>
       <div className="settings-control">
         <div className="settings-input-wrap">
-          <input
-            type="text"
-            inputMode="decimal"
-            className="settings-input"
+          <input type="text" inputMode="decimal" className="settings-input"
             value={raw}
             onChange={(e) => setRaw(e.target.value)}
             onFocus={(e) => e.target.select()}
@@ -268,20 +243,15 @@ function MaxTradesRow({ value, positionUsd, walletUsd, onSave }) {
 
   useEffect(() => {
     const n = parseInt(value) || 5;
-    setRaw(String(n));
-    setNum(n);
+    setRaw(String(n)); setNum(n);
   }, [value]);
 
   const totalExposed = (positionUsd * num).toFixed(2);
-  const pctAtRisk    = walletUsd > 0
-    ? ((positionUsd * num / walletUsd) * 100).toFixed(1)
-    : "—";
+  const pctAtRisk    = walletUsd > 0 ? ((positionUsd * num / walletUsd) * 100).toFixed(1) : "—";
 
   const commit = (str) => {
     const n = Math.min(50, Math.max(1, parseInt(str) || 1));
-    setNum(n);
-    setRaw(String(n));
-    return n;
+    setNum(n); setRaw(String(n)); return n;
   };
 
   const handleSave = async () => {
@@ -300,10 +270,7 @@ function MaxTradesRow({ value, positionUsd, walletUsd, onSave }) {
         </div>
       </div>
       <div className="settings-control">
-        <input
-          type="text"
-          inputMode="numeric"
-          className="settings-input"
+        <input type="text" inputMode="numeric" className="settings-input"
           value={raw}
           onChange={(e) => setRaw(e.target.value)}
           onFocus={(e) => e.target.select()}
@@ -327,23 +294,20 @@ function MinScoreRow({ value, wallets, onSave }) {
 
   useEffect(() => {
     const n = parseFloat(value) || 70;
-    setRaw(String(n));
-    setNum(n);
+    setRaw(String(n)); setNum(n);
   }, [value]);
 
   const qualifying = wallets.filter((w) => w.score >= num).length;
   const total      = wallets.length || 20;
 
   let riskLabel, riskClass;
-  if (num > 50)       { riskLabel = "Low Risk";    riskClass = "risk-badge--low";  }
-  else if (num >= 35) { riskLabel = "Medium Risk";  riskClass = "risk-badge--med";  }
-  else                { riskLabel = "Higher Risk";  riskClass = "risk-badge--high"; }
+  if (num > 50)       { riskLabel = "Low Risk";   riskClass = "risk-badge--low";  }
+  else if (num >= 35) { riskLabel = "Medium Risk"; riskClass = "risk-badge--med";  }
+  else                { riskLabel = "Higher Risk"; riskClass = "risk-badge--high"; }
 
   const commit = (str) => {
     const n = Math.min(100, Math.max(0, parseFloat(str) || 0));
-    setNum(n);
-    setRaw(String(n));
-    return n;
+    setNum(n); setRaw(String(n)); return n;
   };
 
   const handleSave = async () => {
@@ -365,10 +329,7 @@ function MinScoreRow({ value, wallets, onSave }) {
         </div>
       </div>
       <div className="settings-control">
-        <input
-          type="text"
-          inputMode="decimal"
-          className="settings-input"
+        <input type="text" inputMode="decimal" className="settings-input"
           value={raw}
           onChange={(e) => setRaw(e.target.value)}
           onFocus={(e) => e.target.select()}
@@ -378,6 +339,148 @@ function MinScoreRow({ value, wallets, onSave }) {
           {saved ? "Saved" : "Save"}
         </button>
       </div>
+    </div>
+  );
+}
+
+// ── Notifications Card ─────────────────────────────────────────────────────
+
+function urlBase64ToUint8Array(base64) {
+  const pad = "=".repeat((4 - (base64.length % 4)) % 4);
+  const b64 = (base64 + pad).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = window.atob(b64);
+  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+}
+
+function NotificationsCard() {
+  const [notifSettings, setNotifSettings] = useState({ notify_buy: "1", notify_sell: "1", notify_daily: "1" });
+  const [sub, setSub]           = useState(null);
+  const [status, setStatus]     = useState("idle"); // idle | subscribing | subscribed | unsupported
+  const [testStatus, setTest]   = useState("idle"); // idle | sending | sent | error
+  const [vapidKey, setVapidKey] = useState(null);
+
+  useEffect(() => {
+    getNotifSettings().then(setNotifSettings).catch(() => {});
+    getVapidKey().then((d) => setVapidKey(d.publicKey)).catch(() => {});
+
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      setStatus("unsupported");
+      return;
+    }
+    navigator.serviceWorker.ready.then((reg) =>
+      reg.pushManager.getSubscription()
+    ).then((existing) => {
+      if (existing) { setSub(existing); setStatus("subscribed"); }
+    }).catch(() => {});
+  }, []);
+
+  const toggleNotif = async (key) => {
+    const newVal = notifSettings[key] === "1" ? "0" : "1";
+    await updateNotifSetting(key, newVal).catch(() => {});
+    setNotifSettings((prev) => ({ ...prev, [key]: newVal }));
+  };
+
+  const subscribe = async () => {
+    if (!vapidKey) return;
+    setStatus("subscribing");
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") { setStatus("idle"); return; }
+      const reg = await navigator.serviceWorker.ready;
+      const subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidKey),
+      });
+      await subscribeNotif(subscription);
+      setSub(subscription);
+      setStatus("subscribed");
+    } catch (e) {
+      console.error("Push subscribe error:", e);
+      setStatus("idle");
+    }
+  };
+
+  const unsubscribe = async () => {
+    if (!sub) return;
+    await unsubscribeNotif(sub.endpoint).catch(() => {});
+    await sub.unsubscribe().catch(() => {});
+    setSub(null);
+    setStatus("idle");
+  };
+
+  const sendTest = async () => {
+    setTest("sending");
+    try {
+      await testNotification();
+      setTest("sent");
+      setTimeout(() => setTest("idle"), 3000);
+    } catch {
+      setTest("error");
+      setTimeout(() => setTest("idle"), 3000);
+    }
+  };
+
+  const NOTIF_KEYS = [
+    { key: "notify_buy",   label: "Buy alerts",   desc: "Notify when a buy is copied" },
+    { key: "notify_sell",  label: "Sell alerts",  desc: "Notify when a position is closed" },
+    { key: "notify_daily", label: "Daily summary", desc: "End-of-day performance recap" },
+  ];
+
+  return (
+    <div className="settings-card" style={{ marginTop: 16 }}>
+      <div className="settings-row" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+        <div>
+          <div className="settings-label-title">Push Notifications</div>
+          <div className="settings-label-desc">
+            {status === "unsupported" ? "Not supported in this browser" :
+             status === "subscribed"  ? "Notifications enabled on this device" :
+                                        "Get alerts on your phone or desktop"}
+          </div>
+        </div>
+        <div className="settings-control">
+          {status === "subscribed" ? (
+            <button className="btn-save" onClick={unsubscribe} style={{ background: "rgba(255,255,255,0.06)", color: "#888" }}>
+              Disable
+            </button>
+          ) : status === "subscribing" ? (
+            <button className="btn-save" disabled>Enabling...</button>
+          ) : status !== "unsupported" ? (
+            <button className="btn-save" onClick={subscribe}>Enable</button>
+          ) : null}
+        </div>
+      </div>
+
+      {NOTIF_KEYS.map(({ key, label, desc }) => (
+        <div key={key} className="settings-row" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+          <div>
+            <div className="settings-label-title" style={{ fontSize: 13 }}>{label}</div>
+            <div className="settings-label-desc">{desc}</div>
+          </div>
+          <div className="settings-control">
+            <button
+              className={"notif-toggle" + (notifSettings[key] === "1" ? " on" : "")}
+              onClick={() => toggleNotif(key)}
+            >
+              <div className="notif-toggle-thumb" />
+            </button>
+          </div>
+        </div>
+      ))}
+
+      {status === "subscribed" && (
+        <div className="settings-row" style={{ borderBottom: "none" }}>
+          <div className="settings-label-desc">Send a test notification to verify setup</div>
+          <div className="settings-control">
+            <button
+              className={"btn-save" + (testStatus === "sent" ? " saved" : "")}
+              onClick={sendTest}
+              disabled={testStatus === "sending"}
+            >
+              {testStatus === "sending" ? "Sending..." : testStatus === "sent" ? "Sent!" : testStatus === "error" ? "Failed" : "Test"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -394,10 +497,7 @@ export default function Settings() {
   useEffect(() => {
     Promise.all([getSettings(), getWallet(), getWallets(20), getStatus()])
       .then(([s, w, ws, st]) => {
-        setSettings(s);
-        setWallet(w);
-        setWallets(ws);
-        setStatus(st);
+        setSettings(s); setWallet(w); setWallets(ws); setStatus(st);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -429,32 +529,14 @@ export default function Settings() {
       <WalletStatusCard wallet={wallet} paperMode={status?.paperMode} />
 
       <div className="settings-card">
-        <PositionSizeRow
-          value={settings.max_position_sol}
-          wallet={wallet}
-          onSave={handleSave}
-        />
-        <TakeProfitRow
-          value={settings.take_profit_percent}
-          onSave={handleSave}
-        />
-        <StopLossRow
-          value={settings.stop_loss_percent}
-          positionUsd={positionUsd}
-          onSave={handleSave}
-        />
-        <MaxTradesRow
-          value={settings.max_concurrent_positions}
-          positionUsd={positionUsd}
-          walletUsd={walletUsd}
-          onSave={handleSave}
-        />
-        <MinScoreRow
-          value={settings.min_wallet_score}
-          wallets={wallets}
-          onSave={handleSave}
-        />
+        <PositionSizeRow value={settings.max_position_sol} wallet={wallet} onSave={handleSave} />
+        <TakeProfitRow   value={settings.take_profit_percent} onSave={handleSave} />
+        <StopLossRow     value={settings.stop_loss_percent} positionUsd={positionUsd} onSave={handleSave} />
+        <MaxTradesRow    value={settings.max_concurrent_positions} positionUsd={positionUsd} walletUsd={walletUsd} onSave={handleSave} />
+        <MinScoreRow     value={settings.min_wallet_score} wallets={wallets} onSave={handleSave} />
       </div>
+
+      <NotificationsCard />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getWallets, approveWallet } from "../api/botApi";
+import { getWallets, approveWallet, pinWallet } from "../api/botApi";
 
 function WinBar({ rate }) {
   const pct = Math.min(100, Math.max(0, rate * 100));
@@ -35,6 +35,11 @@ export default function Leaderboard() {
     load();
   };
 
+  const togglePin = async (w) => {
+    await pinWallet(w.address, !w.pinned);
+    load();
+  };
+
   if (loading) return <div className="loading">Loading wallets...</div>;
 
   return (
@@ -62,20 +67,26 @@ export default function Leaderboard() {
       ) : (
         <div className="wallet-list">
           {wallets.map((w, i) => {
-            const pnl = parseFloat(w.realized_pnl) || 0;
+            const pnl    = parseFloat(w.realized_pnl) || 0;
+            const pinned = !!w.pinned;
+            const auto   = !!w.approved && !pinned;
             return (
               <div key={w.address} className={"wallet-row" + (w.approved ? " approved" : "")}>
 
                 <span className="wallet-rank">{i + 1}</span>
 
-                <a
-                  href={"https://solscan.io/account/" + w.address}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="wallet-addr"
-                >
-                  {w.address.slice(0, 6)}...{w.address.slice(-4)}
-                </a>
+                <div className="wallet-addr-col">
+                  <a
+                    href={"https://solscan.io/account/" + w.address}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="wallet-addr"
+                  >
+                    {w.address.slice(0, 6)}...{w.address.slice(-4)}
+                  </a>
+                  {pinned && <span className="badge-pinned">PINNED</span>}
+                  {auto   && <span className="badge-auto">AUTO</span>}
+                </div>
 
                 <WinBar rate={w.win_rate} />
 
@@ -96,12 +107,22 @@ export default function Leaderboard() {
                   <div className="wallet-cell-lbl">Realized</div>
                 </div>
 
-                <button
-                  className={"btn-copy" + (w.approved ? " copying" : "")}
-                  onClick={() => toggle(w)}
-                >
-                  {w.approved ? "Copying" : "Copy"}
-                </button>
+                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  <button
+                    className={"btn-pin" + (pinned ? " pinned" : "")}
+                    onClick={() => togglePin(w)}
+                    title={pinned ? "Unpin wallet" : "Pin wallet (always copy)"}
+                  >
+                    📌
+                  </button>
+                  <button
+                    className={"btn-copy" + (w.approved ? " copying" : "")}
+                    onClick={() => toggle(w)}
+                    style={{ flex: 1 }}
+                  >
+                    {w.approved ? "Copying" : "Copy"}
+                  </button>
+                </div>
 
               </div>
             );
