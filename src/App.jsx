@@ -5,7 +5,7 @@ import TradeHistory from "./components/TradeHistory";
 import Settings     from "./components/Settings";
 import Performance  from "./components/Performance";
 import Calendar     from "./components/Calendar";
-import { getStatus, getPerformance } from "./api/botApi";
+import { getStatus, getPerformance, getBotStatus } from "./api/botApi"; // getStatus used in App header
 
 const TABS = [
   { id: "leaderboard",  label: "Wallets"       },
@@ -19,23 +19,101 @@ const TABS = [
 const STATS_TABS = new Set(["positions", "performance", "history"]);
 
 // ── Global Stats Bar ───────────────────────────────────────────────────────
-function GlobalStatsBar({ tab, botStatus }) {
-  const [stats, setStats] = useState(null);
+function formatRelativeTime(iso) {
+  if (!iso) return "never";
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const diffS  = Math.floor(diffMs / 1000);
+  if (diffS < 60)  return `${diffS}s ago`;
+  const diffM = Math.floor(diffS / 60);
+  if (diffM < 60)  return `${diffM}m ago`;
+  const diffH = Math.floor(diffM / 60);
+  return `${diffH}h ago`;
+}
+
+function formatUptime(seconds) {
+  if (seconds < 60)   return `${seconds}s`;
+  const m = Math.floor(seconds / 60);
+  if (m < 60)         return `${m}m`;
+  const h = Math.floor(m / 60);
+  const rem = m % 60;
+  return rem > 0 ? `${h}h ${rem}m` : `${h}h`;
+}
+
+function BotStatusIndicator({ health }) {
+  const [tooltipVisible, setTooltipVisible] = useState(false);
+  const wsState = health?.wsState || "DISCONNECTED";
+
+  let dotClass  = "ws-dot ws-dot--disconnected";
+  let labelText = "Disconnected";
+  if (wsState === "CONNECTED") {
+    dotClass  = "ws-dot ws-dot--connected";
+    labelText = "Connected";
+  } else if (wsState === "DEGRADED") {
+    dotClass  = "ws-dot ws-dot--degraded";
+    labelText = "Degraded";
+  }
+
+  return (
+    <div
+      className="stats-bar-item stats-bar-item--status"
+      onMouseEnter={() => setTooltipVisible(true)}
+      onMouseLeave={() => setTooltipVisible(false)}
+    >
+      <div className="stats-bar-status">
+        <div className={dotClass} />
+        <span className="stats-bar-val stats-bar-val--sm">{labelText}</span>
+      </div>
+      <span className="stats-bar-lbl">Bot Status</span>
+
+      {tooltipVisible && health && (
+        <div className="ws-tooltip">
+          <div className="ws-tooltip-row">
+            <span className="ws-tooltip-key">WS State</span>
+            <span className="ws-tooltip-val">{health.wsState}</span>
+          </div>
+          <div className="ws-tooltip-row">
+            <span className="ws-tooltip-key">Wallets</span>
+            <span className="ws-tooltip-val">{health.subscribedWallets}</span>
+          </div>
+          <div className="ws-tooltip-row">
+            <span className="ws-tooltip-key">Last Tx</span>
+            <span className="ws-tooltip-val">{formatRelativeTime(health.lastTransactionSeen)}</span>
+          </div>
+          <div className="ws-tooltip-row">
+            <span className="ws-tooltip-key">Uptime</span>
+            <span className="ws-tooltip-val">{formatUptime(health.uptimeSeconds || 0)}</span>
+          </div>
+          {health.pollFallbackActive && (
+            <div className="ws-tooltip-row ws-tooltip-row--warn">
+              <span className="ws-tooltip-key">Poll fallback</span>
+              <span className="ws-tooltip-val">active</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GlobalStatsBar({ tab }) {
+  const [stats,  setStats]  = useState(null);
+  const [health, setHealth] = useState(null);
 
   useEffect(() => {
     if (!STATS_TABS.has(tab)) return;
-    const load = () =>
-      getPerformance("today").then((d) => setStats(d.stats)).catch(() => {});
-    load();
-    const id = setInterval(load, 30000);
-    return () => clearInterval(id);
+    const loadStats  = () => getPerformance("today").then((d) => setStats(d.stats)).catch(() => {});
+    const loadHealth = () => getBotStatus().then(setHealth).catch(() => {});
+    loadStats();
+    loadHealth();
+    const statsId  = setInterval(loadStats,  30000);
+    const healthId = setInterval(loadHealth, 30000);
+    return () => { clearInterval(statsId); clearInterval(healthId); };
   }, [tab]);
 
   if (!STATS_TABS.has(tab)) return null;
 
   const s      = stats || { netPnl: 0, total: 0, winRate: 0 };
   const pnlPos = (s.netPnl || 0) >= 0;
-  const online  = botStatus?.ok ?? false;
 
   return (
     <div className="stats-bar">
@@ -58,15 +136,7 @@ function GlobalStatsBar({ tab, botStatus }) {
             </span>
             <span className="stats-bar-lbl">Win Rate Today</span>
           </div>
-          <div className="stats-bar-item">
-            <div className="stats-bar-status">
-              <div className={"status-dot" + (online ? " online" : " offline")} />
-              <span className="stats-bar-val" style={{ fontSize: 13 }}>
-                {online ? "Online" : "Offline"}
-              </span>
-            </div>
-            <span className="stats-bar-lbl">Bot Status</span>
-          </div>
+          <BotStatusIndicator health={health} />
         </div>
       </div>
     </div>
@@ -170,7 +240,7 @@ export default function App() {
 
       {/* ── Scrollable content — offset by fixed header + nav heights ── */}
       <div className="tab-content">
-        <GlobalStatsBar tab={tab} botStatus={status} />
+        <GlobalStatsBar tab={tab} />
         <main className="main">
           <div className="container">
             {tab === "leaderboard"  && <Leaderboard />}

@@ -358,6 +358,50 @@ body {
   60%       { opacity: 0.9; box-shadow: 0 0 0 5px rgba(76,175,132,0); }
 }
 
+/* ── WebSocket status dot ────────────────────────────────────────────────── */
+.ws-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.ws-dot--connected  { background: #4caf84; animation: radar-ping 2s ease-out infinite; }
+.ws-dot--degraded   { background: #f5a623; }
+.ws-dot--disconnected { background: #e05c5c; }
+@keyframes radar-ping {
+  0%   { box-shadow: 0 0 0 0 rgba(76, 175, 132, 0.6); }
+  70%  { box-shadow: 0 0 0 8px rgba(76, 175, 132, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(76, 175, 132, 0); }
+}
+
+/* ── Stats bar status item ───────────────────────────────────────────────── */
+.stats-bar-item--status { position: relative; }
+.stats-bar-val--sm { font-size: 13px; }
+
+/* ── WS tooltip ──────────────────────────────────────────────────────────── */
+.ws-tooltip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: 0;
+  min-width: 190px;
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 10px 12px;
+  z-index: 200;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ws-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.ws-tooltip-row--warn .ws-tooltip-key,
+.ws-tooltip-row--warn .ws-tooltip-val { color: #f5a623; }
+.ws-tooltip-key { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+.ws-tooltip-val { font-size: 11px; color: #ccc; font-weight: 600; white-space: nowrap; }
+
 /* ── Leaderboard — pin button + badges ───────────────────────────────────── */
 .lb-col-head      { grid-template-columns: 28px 170px 1fr 72px 90px 120px 120px; }
 .wallet-row       { grid-template-columns: 28px 170px 1fr 72px 90px 120px 120px; }
