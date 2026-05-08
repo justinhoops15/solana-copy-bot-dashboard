@@ -923,6 +923,18 @@ body {
   .swap-modal-footer { flex-direction: column; gap: 8px; }
   .btn-swap-confirm,
   .btn-swap-cancel { width: 100%; }
+
+  /* ── Trade History — mobile ── */
+  .th-card-header    { flex-direction: column; gap: 10px; }
+  .th-header-main    { flex-direction: column; gap: 6px; }
+  .th-card-mid       { padding-left: 0; }
+  .th-header-side    { flex-direction: row; justify-content: space-between; align-items: center; }
+  .th-pnl-wrap       { align-items: flex-start; }
+  .th-token-name     { font-size: 15px; }
+  .th-pnl-pct        { font-size: 16px; }
+  .th-leg            { flex-direction: column; gap: 4px; align-items: flex-start; padding: 10px 0; }
+  .th-leg-left       { flex-wrap: wrap; gap: 6px; }
+  .th-leg-right      { width: 100%; justify-content: flex-start; gap: 10px; }
 }
 
 /* ── Swap modal ──────────────────────────────────────────────────────────── */
@@ -1137,4 +1149,247 @@ body {
   12%  { opacity: 1; transform: translateX(-50%) translateY(0); }
   78%  { opacity: 1; transform: translateX(-50%) translateY(0); }
   100% { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+}
+
+/* ── Trade History — position cards ─────────────────────────────────────── */
+.th-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.th-card {
+  background: #080808;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.th-card:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.th-card-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  cursor: pointer;
+  user-select: none;
+  min-height: 44px;
+}
+
+.th-card-header:focus-visible {
+  outline: 1px solid #22d3ee;
+  outline-offset: -2px;
+}
+
+.th-header-main {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex: 1;
+  min-width: 0;
+}
+
+.th-header-side {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+/* Left — token + wallet info */
+.th-card-left {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex-shrink: 0;
+  min-width: 140px;
+}
+
+.th-token-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.th-token-addr,
+.th-wallet-addr {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: #888888;
+  line-height: 1.4;
+}
+
+/* Mid — leg summary + date range */
+.th-card-mid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.th-leg-summary {
+  font-size: 11px;
+  font-weight: 600;
+  color: #888888;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.th-date-range {
+  font-size: 11px;
+  color: #888888;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Right — PnL + badge + chevron */
+.th-pnl-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.th-pnl-pct {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.th-pnl-usd {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.th-pnl-pos  { color: #4caf84; }
+.th-pnl-neg  { color: #e05c5c; }
+.th-pnl-zero { color: #ffffff; }
+
+.th-badge-closed {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #888888;
+  border: 1px solid #888888;
+  border-radius: 4px;
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+
+.th-chevron {
+  color: #888888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.th-chevron--open {
+  transform: rotate(180deg);
+}
+
+/* Expanded legs */
+.th-legs {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s ease;
+}
+
+.th-legs--open {
+  max-height: 1200px;
+}
+
+.th-leg {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px 12px 40px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  min-height: 44px;
+}
+
+.th-leg-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.th-leg-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Leg side badges */
+.th-leg-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-radius: 4px;
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+
+.th-leg-badge--buy {
+  background: rgba(76, 175, 132, 0.15);
+  color: #4caf84;
+}
+
+.th-leg-badge--sell {
+  background: rgba(224, 92, 92, 0.15);
+  color: #e05c5c;
+}
+
+.th-leg-badge--partial {
+  background: rgba(245, 166, 35, 0.15);
+  color: #f5a623;
+}
+
+.th-leg-paper {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #888888;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+
+.th-leg-time {
+  font-size: 12px;
+  color: #888888;
+}
+
+.th-leg-price {
+  font-size: 12px;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  font-family: 'Courier New', monospace;
+}
+
+.th-leg-sol {
+  font-size: 12px;
+  color: #888888;
+  font-variant-numeric: tabular-nums;
+}
+
+.th-leg-pnl {
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  min-width: 56px;
+  text-align: right;
 }
