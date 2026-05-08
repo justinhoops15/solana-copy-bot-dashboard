@@ -135,7 +135,7 @@ export default function App() {
           <div className="container">
             <div className="header-inner">
               <div className="header-logo">
-                <div className="logo-mark"><div className="logo-mark-inner" /></div>
+                <img src="/logo.svg" alt="" className="header-logo-img" />
                 <span className="logo-name">CopyTradeAI</span>
               </div>
               <div className="header-right">

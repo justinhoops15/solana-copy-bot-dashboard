@@ -4,6 +4,16 @@
 html, body { max-width: 100vw; overflow-x: hidden; }
 #root      { max-width: 100vw; overflow-x: hidden; }
 
+/* ── iPhone safe area insets (notch / Dynamic Island / home indicator) ─────
+   viewport-fit=cover lets the app fill the full screen; these env()
+   variables push content clear of the status bar and home indicator.      */
+:root {
+  --sat: env(safe-area-inset-top);
+  --sar: env(safe-area-inset-right);
+  --sab: env(safe-area-inset-bottom);
+  --sal: env(safe-area-inset-left);
+}
+
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background-color: #050508;
@@ -33,22 +43,17 @@ body {
 /* Header */
 .header {
   border-bottom: 1px solid rgba(255,255,255,0.05);
+  /* Base vertical padding + safe-area-inset-top so content clears status bar */
   padding: 18px 0;
+  padding-top: calc(env(safe-area-inset-top) + 18px);
   background: rgba(5,5,8,0.85);
   backdrop-filter: blur(16px);
   position: sticky; top: 0; z-index: 100;
 }
 .header-inner { display: flex; align-items: center; justify-content: space-between; }
-.header-logo  { display: flex; align-items: center; gap: 12px; }
-.logo-mark {
-  width: 30px; height: 30px;
-  background: linear-gradient(135deg, #7c3aed 0%, #22d3ee 100%);
-  border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
-.logo-mark-inner {
-  width: 12px; height: 12px; background: #ffffff;
-  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
-}
+.header-logo  { display: flex; align-items: center; gap: 10px; }
+/* New SVG logo — replaces the old CSS-drawn logo-mark */
+.header-logo-img { width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0; display: block; }
 .logo-name { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
 .header-right { display: flex; align-items: center; gap: 16px; }
 .badge-paper {
@@ -76,7 +81,7 @@ body {
 .nav-tab.active { color: #ffffff; border-bottom-color: #7c3aed; }
 
 /* Main */
-.main { flex: 1; padding: 40px 0 80px; }
+.main { flex: 1; padding: 40px 0 80px; padding-bottom: calc(env(safe-area-inset-bottom) + 80px); }
 
 /* Section heading */
 .section-head  { display: flex; align-items: baseline; gap: 12px; margin-bottom: 24px; }
@@ -494,7 +499,9 @@ body {
 .install-banner {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
   background: #0e0e12; border-top: 1px solid rgba(124,58,237,0.3);
-  padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+  padding: 12px 20px;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 12px);
+  display: flex; align-items: center; gap: 12px;
   backdrop-filter: blur(12px);
   animation: slideUp 0.3s ease;
 }
