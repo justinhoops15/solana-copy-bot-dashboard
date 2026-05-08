@@ -19,16 +19,13 @@ const TABS = [
 const STATS_TABS = new Set(["positions", "performance", "history"]);
 
 // ── Global Stats Bar ───────────────────────────────────────────────────────
-// Uses border-right on items instead of separator divs so nth-child works cleanly on mobile.
 function GlobalStatsBar({ tab, botStatus }) {
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
     if (!STATS_TABS.has(tab)) return;
     const load = () =>
-      getPerformance("today")
-        .then((d) => setStats(d.stats))
-        .catch(() => {});
+      getPerformance("today").then((d) => setStats(d.stats)).catch(() => {});
     load();
     const id = setInterval(load, 30000);
     return () => clearInterval(id);
@@ -129,49 +126,51 @@ export default function App() {
     <>
       <div className="bg-orbs" />
       <InstallBanner />
-      <div className="app-wrapper">
 
-        <header className="header">
-          <div className="container">
-            <div className="header-inner">
-              <div className="header-logo">
-                <img src="/logo.svg" alt="" className="header-logo-img" />
-                <span className="logo-name">CopyTradeAI</span>
-              </div>
-              <div className="header-right">
-                {status ? (
-                  <>
-                    <span className={status.paperMode ? "badge-paper" : "badge-live"}>
-                      {status.paperMode ? "Paper" : "Live"}
-                    </span>
-                    <span className="header-uptime">up {Math.floor(status.uptime / 60)}m</span>
-                  </>
-                ) : (
-                  <span className="header-offline">Offline</span>
-                )}
-              </div>
+      {/* ── Fixed header — sits above the status bar, bg fills behind it ── */}
+      <header className="app-header">
+        <div className="container">
+          <div className="header-inner">
+            <div className="header-logo">
+              <img src="/logo.svg" alt="" className="header-logo-img" />
+              <span className="logo-name">CopyTradeAI</span>
+            </div>
+            <div className="header-right">
+              {status ? (
+                <>
+                  <span className={status.paperMode ? "badge-paper" : "badge-live"}>
+                    {status.paperMode ? "Paper" : "Live"}
+                  </span>
+                  <span className="header-uptime">up {Math.floor(status.uptime / 60)}m</span>
+                </>
+              ) : (
+                <span className="header-offline">Offline</span>
+              )}
             </div>
           </div>
-        </header>
+        </div>
+      </header>
 
-        <nav className="nav">
-          <div className="container nav-container">
-            <div className="nav-inner">
-              {TABS.map((t) => (
-                <button
-                  key={t.id}
-                  className={"nav-tab" + (tab === t.id ? " active" : "")}
-                  onClick={() => setTab(t.id)}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
+      {/* ── Fixed tab nav — sits immediately below the header ── */}
+      <nav className="tab-nav">
+        <div className="container nav-container">
+          <div className="nav-inner">
+            {TABS.map((t) => (
+              <button
+                key={t.id}
+                className={"nav-tab" + (tab === t.id ? " active" : "")}
+                onClick={() => setTab(t.id)}
+              >
+                {t.label}
+              </button>
+            ))}
           </div>
-        </nav>
+        </div>
+      </nav>
 
+      {/* ── Scrollable content — offset by fixed header + nav heights ── */}
+      <div className="tab-content">
         <GlobalStatsBar tab={tab} botStatus={status} />
-
         <main className="main">
           <div className="container">
             {tab === "leaderboard"  && <Leaderboard />}
@@ -182,7 +181,6 @@ export default function App() {
             {tab === "settings"     && <Settings />}
           </div>
         </main>
-
       </div>
     </>
   );

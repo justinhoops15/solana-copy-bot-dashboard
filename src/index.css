@@ -37,22 +37,27 @@ body {
 }
 
 /* Layout */
-.app-wrapper { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
-.container   { max-width: 1200px; margin: 0 auto; padding: 0 24px; width: 100%; }
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; width: 100%; }
 
-/* Header */
-.header {
+/* ── Fixed header — background fills behind iOS status bar seamlessly ─────
+   padding-top: env(safe-area-inset-top) pushes inner content below the bar.
+   The #050508 background is the same dark as the app so no gap is visible.  */
+.app-header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  background-color: #050508;
   border-bottom: 1px solid rgba(255,255,255,0.05);
-  /* Base vertical padding + safe-area-inset-top so content clears status bar */
-  padding: 18px 0;
-  padding-top: calc(env(safe-area-inset-top) + 18px);
-  background: rgba(5,5,8,0.85);
-  backdrop-filter: blur(16px);
-  position: sticky; top: 0; z-index: 100;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
-.header-inner { display: flex; align-items: center; justify-content: space-between; }
+/* Inner row — 48px tall so nav can sit exactly at safe-area-top + 48px */
+.header-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0; height: 48px; box-sizing: border-box;
+}
 .header-logo  { display: flex; align-items: center; gap: 10px; }
-/* New SVG logo — replaces the old CSS-drawn logo-mark */
 .header-logo-img { width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0; display: block; }
 .logo-name { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
 .header-right { display: flex; align-items: center; gap: 16px; }
@@ -69,19 +74,36 @@ body {
 .header-uptime  { font-size: 12px; color: #888888; }
 .header-offline { font-size: 12px; color: #e05c5c; }
 
-/* Nav */
-.nav { border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(5,5,8,0.6); backdrop-filter: blur(12px); }
+/* ── Fixed tab nav — positioned immediately below the header ── */
+.tab-nav {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 48px);
+  left: 0; right: 0; z-index: 999;
+  background-color: #050508;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
 .nav-inner { display: flex; }
 .nav-tab {
   padding: 15px 24px; font-size: 13px; font-weight: 500; color: #888888;
   background: none; border: none; border-bottom: 2px solid transparent;
   cursor: pointer; transition: color 0.15s, border-color 0.15s; margin-bottom: -1px;
+  white-space: nowrap;
 }
 .nav-tab:hover  { color: #cccccc; }
 .nav-tab.active { color: #ffffff; border-bottom-color: #7c3aed; }
 
+/* ── Scrollable content area — top offset = status-bar + header(48) + nav(48) ── */
+.tab-content {
+  padding-top: calc(env(safe-area-inset-top) + 96px);
+  padding-bottom: env(safe-area-inset-bottom);
+  min-height: 100vh;
+  position: relative; z-index: 1;
+}
+
 /* Main */
-.main { flex: 1; padding: 40px 0 80px; padding-bottom: calc(env(safe-area-inset-bottom) + 80px); }
+.main { padding: 20px 0 80px; padding-bottom: calc(env(safe-area-inset-bottom) + 80px); }
 
 /* Section heading */
 .section-head  { display: flex; align-items: baseline; gap: 12px; margin-bottom: 24px; }
@@ -580,17 +602,20 @@ body {
 @media (max-width: 768px) {
 
   /* ── Layout ── */
-  .container { padding: 0 12px; }
-  .main      { padding: 20px 0 80px; }
+  .container  { padding: 0 12px; }
+  .main       { padding: 20px 0 80px; }
+  .tab-content { padding-top: calc(env(safe-area-inset-top) + 88px); } /* slightly tighter on mobile */
 
-  /* ── Header ── */
-  .header { padding: 12px 0; }
+  /* ── Header (fixed, class is now .app-header) ── */
+  .app-header { /* safe-area padding already in env() — nothing extra needed */ }
+  .header-inner { height: 44px; padding: 8px 0; }   /* slightly shorter on mobile */
   .logo-name { font-size: 13px; }
   .header-uptime { display: none; }
   .badge-paper, .badge-live { font-size: 9px; padding: 3px 7px; }
 
-  /* ── Nav — tab bar scrolls, content never does ── */
-  .nav-container { padding: 0; }          /* remove side padding so scroll is flush */
+  /* ── Tab nav (fixed, class is now .tab-nav) ── */
+  .tab-nav { top: calc(env(safe-area-inset-top) + 44px); } /* match shorter mobile header */
+  .nav-container { padding: 0; }
   .nav-inner {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
