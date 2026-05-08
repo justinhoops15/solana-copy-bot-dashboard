@@ -1,5 +1,9 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Global overflow lock — prevents ALL horizontal scrolling on page level */
+html, body { max-width: 100vw; overflow-x: hidden; }
+#root      { max-width: 100vw; overflow-x: hidden; }
+
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background-color: #050508;
@@ -303,19 +307,21 @@ body {
   padding: 10px 0;
 }
 .stats-bar-inner {
-  display: flex; align-items: center; flex-wrap: wrap;
+  display: flex; align-items: stretch;
 }
 .stats-bar-item {
-  display: flex; flex-direction: column; align-items: center;
-  padding: 4px 24px; gap: 3px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 4px 24px; gap: 3px; flex: 1;
+  border-right: 1px solid rgba(255,255,255,0.06);
 }
+.stats-bar-item:last-child { border-right: none; }
 .stats-bar-val {
   font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; color: #ffffff;
 }
 .stats-bar-lbl {
   font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #444;
 }
-.stats-bar-sep  { width: 1px; height: 28px; background: rgba(255,255,255,0.06); flex-shrink: 0; }
+.stats-bar-sep  { display: none; } /* kept for backwards compat, hidden */
 .stats-bar-status { display: flex; align-items: center; gap: 6px; }
 .status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .status-dot.online  { background: #4caf84; animation: pulse-dot 2s infinite; }
@@ -544,4 +550,293 @@ body {
 .pwa-install-note {
   font-size: 11px; color: #444444; border-top: 1px solid rgba(255,255,255,0.05);
   padding-top: 12px; margin-top: 4px;
+}
+
+/* ── Desktop display:contents for mobile wrapper divs ───────────────────────
+   These wrappers are invisible on desktop (children participate in parent grid/flex
+   as if the wrapper doesn't exist), but activate as visible containers on mobile. */
+.wallet-row-meta   { display: contents; }
+.pos-cell-grid     { display: contents; }
+.trade-row-top,
+.trade-row-main,
+.trade-row-foot    { display: contents; }
+.perf-tr-main,
+.perf-tr-foot      { display: contents; }
+
+/* wallet-row-actions: visible flex row on desktop (replaces the old inline style) */
+.wallet-row-actions {
+  display: flex; gap: 6px; align-items: center;
+}
+.wallet-row-actions .btn-copy { flex: 1; }
+
+/* ── MOBILE — all breakpoint overrides ──────────────────────────────────────── */
+@media (max-width: 768px) {
+
+  /* ── Layout ── */
+  .container { padding: 0 12px; }
+  .main      { padding: 20px 0 80px; }
+
+  /* ── Header ── */
+  .header { padding: 12px 0; }
+  .logo-name { font-size: 13px; }
+  .header-uptime { display: none; }
+  .badge-paper, .badge-live { font-size: 9px; padding: 3px 7px; }
+
+  /* ── Nav — tab bar scrolls, content never does ── */
+  .nav-container { padding: 0; }          /* remove side padding so scroll is flush */
+  .nav-inner {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 0 12px;
+  }
+  .nav-inner::-webkit-scrollbar { display: none; }
+  .nav-tab { flex-shrink: 0; padding: 12px 16px; font-size: 13px; white-space: nowrap; }
+
+  /* ── Global Stats Bar — 2×2 grid ── */
+  .stats-bar-inner { flex-wrap: wrap; }
+  .stats-bar-item  {
+    flex: 0 0 50%;
+    padding: 8px 0;
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  /* odd items (1st, 3rd) get right border to form grid lines */
+  .stats-bar-item:nth-child(odd)  { border-right: 1px solid rgba(255,255,255,0.05) !important; }
+  /* bottom row (3rd, 4th) no bottom border */
+  .stats-bar-item:nth-child(3),
+  .stats-bar-item:nth-child(4)    { border-bottom: none; }
+  .stats-bar-val { font-size: 13px; }
+  .stats-bar-lbl { font-size: 8px;  }
+
+  /* ── Section heading ── */
+  .section-head  { margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+  .section-title { font-size: 16px; }
+
+  /* ════════════════════════════════════════════════════════════
+     WALLETS TAB
+     ════════════════════════════════════════════════════════════ */
+  .lb-col-head { display: none; }
+
+  .wallet-row {
+    display: flex !important;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px;
+  }
+
+  /* Rank hidden on mobile — space taken by address instead */
+  .wallet-rank { display: none; }
+
+  /* Address row with badges inline */
+  .wallet-addr-col {
+    flex-direction: row !important;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .wallet-addr { font-size: 12px; }
+
+  /* Win rate bar spans full card width */
+  .wallet-winrate-cell { width: 100%; }
+  .win-bar-track       { flex: 1; min-width: 0; }
+
+  /* wallet-row-meta activates: 3 stat cells in a horizontal row */
+  .wallet-row-meta {
+    display: flex !important;
+    width: 100%;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .wallet-row-meta .wallet-cell {
+    flex: 1;
+    text-align: center;
+    padding: 8px 4px;
+    border-right: 1px solid rgba(255,255,255,0.07);
+  }
+  .wallet-row-meta .wallet-cell:last-child { border-right: none; }
+  .wallet-cell-val { font-size: 12px; }
+  .wallet-cell-lbl { font-size: 8px;  }
+
+  /* Buttons span full card width */
+  .wallet-row-actions { width: 100%; }
+  .btn-pin  { width: 36px; height: 36px; flex-shrink: 0; }
+  .btn-copy { width: auto !important; }
+
+  /* ════════════════════════════════════════════════════════════
+     POSITIONS TAB
+     ════════════════════════════════════════════════════════════ */
+  .pos-col-head { display: none; }
+
+  .position-row {
+    display: flex !important;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  /* pos-cell-grid activates: 2×2 grid of price cells */
+  .pos-cell-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+  }
+  .pos-cell      { text-align: left; }
+  .pos-cell-val  { font-size: 13px;  }
+
+  /* ════════════════════════════════════════════════════════════
+     TRADE HISTORY TAB
+     ════════════════════════════════════════════════════════════ */
+  .trade-table-head { display: none; }
+
+  .trade-row {
+    display: flex !important;
+    flex-direction: column;
+    padding: 14px 16px;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .trade-row:last-child { border-bottom: none; }
+
+  /* Wrapper divs activate as flex rows */
+  .trade-row-top {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    justify-content: space-between;
+  }
+  .trade-row-main {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .trade-row-foot {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .trade-time   { font-size: 11px; color: #555; }
+  .trade-token  { font-size: 13px; font-weight: 600; }
+  .trade-price  { font-size: 12px; }
+  .trade-sol    { font-size: 12px; color: #666; }
+  .trade-wallet { font-size: 11px; color: #555; }
+
+  /* ════════════════════════════════════════════════════════════
+     PERFORMANCE TAB
+     ════════════════════════════════════════════════════════════ */
+
+  /* Section head: title + period filter stack vertically */
+  .perf-section-head { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .perf-period-filter {
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 6px;
+  }
+  /* Day / Week / Month on row 1 (≈33% each), Year / All Time on row 2 (≈50% each) */
+  .perf-period-btn { flex: 1 1 calc(33.33% - 8px); font-size: 12px; padding: 7px 6px; text-align: center; }
+
+  /* Stats: 2-column grid */
+  .perf-stats-grid { grid-template-columns: 1fr 1fr; }
+  .perf-stat-value { font-size: 18px; }
+  .perf-stat-sub   { font-size: 10px; }
+  .perf-chart-card { padding: 14px; margin-bottom: 10px; }
+  .perf-chart-title { font-size: 10px; margin-bottom: 10px; }
+
+  /* Trade table → cards */
+  .perf-trade-head { display: none; }
+
+  .perf-trade-row {
+    display: flex !important;
+    flex-direction: column;
+    padding: 12px 16px;
+    gap: 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .perf-trade-row:last-child { border-bottom: none; }
+
+  /* Wrapper divs activate */
+  .perf-tr-main {
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    justify-content: space-between;
+  }
+  .perf-tr-foot {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    color: #555;
+    font-size: 11px;
+    justify-content: space-between;
+  }
+  .perf-trade-symbol { font-size: 13px; }
+  .perf-trade-wallet { font-size: 11px; }
+  .perf-trade-time   { font-size: 11px; }
+  .perf-trade-dur    { font-size: 11px; }
+
+  /* ════════════════════════════════════════════════════════════
+     PNL CALENDAR TAB
+     ════════════════════════════════════════════════════════════ */
+
+  /* Monthly stats: 2×2 grid */
+  .cal-summary { flex-wrap: wrap; gap: 6px; }
+  .cal-summary-stat { flex: 0 0 calc(50% - 3px); min-width: 0; padding: 10px 12px; }
+  .cal-summary-val  { font-size: 15px; }
+  .cal-summary-lbl  { font-size: 9px;  }
+
+  /* Navigation row stays on one line */
+  .cal-nav-label { font-size: 12px; min-width: 100px; }
+  .cal-nav-btn   { width: 28px; height: 28px; font-size: 12px; }
+
+  /* Day cells: shorter so 5 weeks fit on screen */
+  .cal-day        { min-height: 52px; padding: 4px 5px; gap: 2px; }
+  .cal-day-num    { font-size: 10px; }
+  .cal-day-pnl    { font-size: 10px; }
+  .cal-day-trades { font-size: 8px;  }
+  .cal-dow        { font-size: 9px; padding: 4px 0; }
+
+  /* Panel */
+  .cal-panel { padding: 16px; }
+  .cal-panel-stat-val { font-size: 18px; }
+
+  /* ════════════════════════════════════════════════════════════
+     SETTINGS TAB
+     ════════════════════════════════════════════════════════════ */
+
+  /* Stack label above control */
+  .settings-row       { flex-direction: column; align-items: stretch; padding: 16px; gap: 12px; }
+  .settings-row--tall { flex-direction: column; align-items: stretch; padding: 16px; gap: 12px; }
+  .settings-row-left  { min-width: 0; width: 100%; }
+
+  /* Control group: full width, stacked */
+  .settings-control { flex-direction: column; width: 100%; gap: 8px; }
+  .settings-input-wrap { width: 100%; }
+  .settings-input-wrap .settings-input { width: 100%; text-align: left; }
+  .settings-input { width: 100%; }
+  .btn-save { width: 100%; }
+  .sol-slider { width: 100%; }
+
+  /* Wallet card */
+  .settings-wallet-card    { padding: 16px; }
+  .settings-wallet-sol     { font-size: 24px; }
+  .settings-wallet-balance { flex-wrap: wrap; gap: 6px; }
+  .settings-score-row      { flex-wrap: wrap; }
+
+  /* PWA install card */
+  .pwa-install-card { padding: 16px; }
+  .pwa-step-text    { font-size: 12px; }
+  .pwa-install-header { gap: 10px; }
+
+  /* Notification card */
+  .notif-toggle { flex-shrink: 0; }
+
+  /* ── Misc ── */
+  .install-banner { flex-wrap: wrap; padding: 10px 12px; gap: 8px; }
+  .install-banner-text { font-size: 12px; width: 100%; }
+  .empty-state { padding: 48px 16px; }
 }

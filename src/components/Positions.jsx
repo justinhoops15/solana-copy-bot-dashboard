@@ -6,10 +6,8 @@ export default function Positions() {
   const [loading, setLoading]     = useState(true);
 
   useEffect(() => {
-    const load = () => getPositions()
-      .then(setPositions)
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    const load = () =>
+      getPositions().then(setPositions).catch(console.error).finally(() => setLoading(false));
     load();
     const id = setInterval(load, 15000);
     return () => clearInterval(id);
@@ -27,7 +25,7 @@ export default function Positions() {
       {positions.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-title">No open positions</div>
-          <div className="empty-state-sub">Approve wallets on the Leaderboard tab to start copy-trading</div>
+          <div className="empty-state-sub">Approve wallets on the Wallets tab to start copy-trading</div>
         </div>
       ) : (
         <>
@@ -40,50 +38,57 @@ export default function Positions() {
           </div>
           <div className="position-list">
             {positions.map((p) => {
-              const pnl = parseFloat(p.pnl_percent) || 0;
+              const pnl   = parseFloat(p.pnl_percent) || 0;
               const isPos = pnl >= 0;
               const openDate = new Date(p.opened_at * 1000);
               const timeStr  = openDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
               const dateStr  = openDate.toLocaleDateString([], { month: "short", day: "numeric" });
               return (
                 <div key={p.id} className="position-row">
-                  <div>
+
+                  {/* Token info — always first */}
+                  <div className="pos-token-info">
                     <div className="pos-token-name">
                       {p.token_symbol || p.token_address.slice(0, 8) + "..."}
                     </div>
                     <div className="pos-token-from">
                       {p.wallet_address.slice(0, 6)}...{p.wallet_address.slice(-4)}
                     </div>
-                    {p.paper_trade === 1 && (
-                      <div className="pos-badge-paper">Paper</div>
-                    )}
+                    {p.paper_trade === 1 && <div className="pos-badge-paper">Paper</div>}
                   </div>
 
-                  <div className="pos-cell">
-                    <div className="pos-cell-val muted">
-                      {p.buy_price_usd > 0 ? "$" + p.buy_price_usd.toFixed(6) : "--"}
+                  {/* pos-cell-grid: display:contents on desktop (grid sees children directly);
+                      becomes a 2×2 grid on mobile */}
+                  <div className="pos-cell-grid">
+                    <div className="pos-cell">
+                      <div className="pos-cell-val muted">
+                        {p.buy_price_usd > 0 ? "$" + p.buy_price_usd.toFixed(6) : "--"}
+                      </div>
+                      <div className="pos-cell-lbl">Entry</div>
                     </div>
-                    <div className="pos-cell-lbl">Entry</div>
-                  </div>
 
-                  <div className="pos-cell">
-                    <div className="pos-cell-val muted">
-                      {p.current_price > 0 ? "$" + p.current_price.toFixed(6) : "--"}
+                    <div className="pos-cell">
+                      <div className="pos-cell-val muted">
+                        {p.current_price > 0 ? "$" + p.current_price.toFixed(6) : "--"}
+                      </div>
+                      <div className="pos-cell-lbl">Current</div>
                     </div>
-                    <div className="pos-cell-lbl">Current</div>
-                  </div>
 
-                  <div className="pos-cell">
-                    <div className={"pos-cell-val " + (isPos ? "pos" : "neg")}>
-                      {isPos ? "+" : ""}{pnl.toFixed(2)}%
+                    <div className="pos-cell">
+                      <div className={"pos-cell-val " + (isPos ? "pos" : "neg")}>
+                        {isPos ? "+" : ""}{pnl.toFixed(2)}%
+                      </div>
+                      <div className="pos-cell-lbl">PnL</div>
                     </div>
-                    <div className="pos-cell-lbl">PnL</div>
+
+                    <div className="pos-cell">
+                      <div className="pos-cell-val muted" style={{ fontSize: "12px", fontWeight: 500 }}>
+                        {timeStr}
+                      </div>
+                      <div className="pos-cell-lbl">{dateStr}</div>
+                    </div>
                   </div>
 
-                  <div className="pos-cell">
-                    <div className="pos-cell-val muted" style={{ fontSize: "12px", fontWeight: 500 }}>{timeStr}</div>
-                    <div className="pos-cell-lbl">{dateStr}</div>
-                  </div>
                 </div>
               );
             })}

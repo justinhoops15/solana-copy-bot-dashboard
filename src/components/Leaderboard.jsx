@@ -17,12 +17,8 @@ export default function Leaderboard() {
   const [wallets, setWallets] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const load = () => {
-    getWallets(20)
-      .then(setWallets)
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  };
+  const load = () =>
+    getWallets(20).then(setWallets).catch(console.error).finally(() => setLoading(false));
 
   useEffect(() => {
     load();
@@ -30,23 +26,16 @@ export default function Leaderboard() {
     return () => clearInterval(id);
   }, []);
 
-  const toggle = async (w) => {
-    await approveWallet(w.address, !w.approved);
-    load();
-  };
-
-  const togglePin = async (w) => {
-    await pinWallet(w.address, !w.pinned);
-    load();
-  };
+  const toggle    = async (w) => { await approveWallet(w.address, !w.approved); load(); };
+  const togglePin = async (w) => { await pinWallet(w.address, !w.pinned);   load(); };
 
   if (loading) return <div className="loading">Loading wallets...</div>;
 
   return (
     <div>
       <div className="section-head">
-        <span className="section-title">Leaderboard</span>
-        <span className="section-count">{wallets.length} wallets scored</span>
+        <span className="section-title">Wallets</span>
+        <span className="section-count">{wallets.length} scored</span>
       </div>
 
       <div className="lb-col-head">
@@ -75,11 +64,11 @@ export default function Leaderboard() {
 
                 <span className="wallet-rank">{i + 1}</span>
 
+                {/* address + badges — display:contents on desktop so grid sees children */}
                 <div className="wallet-addr-col">
                   <a
                     href={"https://solscan.io/account/" + w.address}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    target="_blank" rel="noopener noreferrer"
                     className="wallet-addr"
                   >
                     {w.address.slice(0, 6)}...{w.address.slice(-4)}
@@ -90,24 +79,27 @@ export default function Leaderboard() {
 
                 <WinBar rate={w.win_rate} />
 
-                <div className="wallet-cell">
-                  <div className="wallet-cell-val wallet-cell-val--score">{w.score.toFixed(1)}</div>
-                  <div className="wallet-cell-lbl">Score</div>
-                </div>
-
-                <div className="wallet-cell">
-                  <div className="wallet-cell-val">{w.trade_count.toLocaleString()}</div>
-                  <div className="wallet-cell-lbl">Trades</div>
-                </div>
-
-                <div className="wallet-cell">
-                  <div className="wallet-cell-val pos">
-                    ${Math.abs(pnl).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                {/* wallet-row-meta: display:contents on desktop keeps grid intact;
+                    becomes a visible flex row on mobile */}
+                <div className="wallet-row-meta">
+                  <div className="wallet-cell">
+                    <div className="wallet-cell-val wallet-cell-val--score">{w.score.toFixed(1)}</div>
+                    <div className="wallet-cell-lbl">Score</div>
                   </div>
-                  <div className="wallet-cell-lbl">Realized</div>
+                  <div className="wallet-cell">
+                    <div className="wallet-cell-val">{w.trade_count.toLocaleString()}</div>
+                    <div className="wallet-cell-lbl">Trades</div>
+                  </div>
+                  <div className="wallet-cell">
+                    <div className="wallet-cell-val pos">
+                      ${Math.abs(pnl).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    </div>
+                    <div className="wallet-cell-lbl">Realized</div>
+                  </div>
                 </div>
 
-                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                {/* wallet-row-actions: flex row on both desktop and mobile */}
+                <div className="wallet-row-actions">
                   <button
                     className={"btn-pin" + (pinned ? " pinned" : "")}
                     onClick={() => togglePin(w)}
@@ -118,7 +110,6 @@ export default function Leaderboard() {
                   <button
                     className={"btn-copy" + (w.approved ? " copying" : "")}
                     onClick={() => toggle(w)}
-                    style={{ flex: 1 }}
                   >
                     {w.approved ? "Copying" : "Copy"}
                   </button>

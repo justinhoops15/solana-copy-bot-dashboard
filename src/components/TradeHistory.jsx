@@ -12,10 +12,7 @@ export default function TradeHistory() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getTrades(100)
-      .then(setTrades)
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    getTrades(100).then(setTrades).catch(console.error).finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div className="loading">Loading trade history...</div>;
@@ -43,29 +40,37 @@ export default function TradeHistory() {
             <span>SOL</span>
             <span>Mode</span>
           </div>
+
           {trades.map((t) => (
             <div key={t.id} className="trade-row">
-              <span className="trade-time">{fmt(t.executed_at)}</span>
-              <span className={t.action === "buy" ? "trade-buy" : "trade-sell"}>
-                {t.action}
-              </span>
-              <span className="trade-token">
-                {t.token_symbol || t.token_address.slice(0, 8) + "..."}
-              </span>
-              <span className="trade-wallet">
-                {t.wallet_address.slice(0, 6)}...{t.wallet_address.slice(-4)}
-              </span>
-              <span className="trade-price">
-                {t.price_usd > 0 ? "$" + t.price_usd.toFixed(6) : "--"}
-              </span>
-              <span className="trade-sol">
-                {t.sol_amount != null ? t.sol_amount.toFixed(4) : "--"}
-              </span>
-              <span>
+              {/* trade-row-top / trade-row-main / trade-row-foot:
+                  display:contents on desktop so grid children participate normally;
+                  become visible flex rows on mobile */}
+              <div className="trade-row-top">
+                <span className="trade-time">{fmt(t.executed_at)}</span>
+                <span className={t.action === "buy" ? "trade-buy" : "trade-sell"}>
+                  {t.action}
+                </span>
                 <span className={t.paper_trade ? "trade-mode-paper" : "trade-mode-live"}>
                   {t.paper_trade ? "Paper" : "Live"}
                 </span>
-              </span>
+              </div>
+              <div className="trade-row-main">
+                <span className="trade-token">
+                  {t.token_symbol || t.token_address.slice(0, 8) + "..."}
+                </span>
+                <span className="trade-wallet">
+                  {t.wallet_address.slice(0, 6)}...{t.wallet_address.slice(-4)}
+                </span>
+              </div>
+              <div className="trade-row-foot">
+                <span className="trade-price">
+                  {t.price_usd > 0 ? "$" + t.price_usd.toFixed(6) : "--"}
+                </span>
+                <span className="trade-sol">
+                  {t.sol_amount != null ? t.sol_amount.toFixed(4) + " SOL" : "--"}
+                </span>
+              </div>
             </div>
           ))}
         </div>

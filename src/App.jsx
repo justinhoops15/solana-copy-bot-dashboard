@@ -16,10 +16,10 @@ const TABS = [
   { id: "settings",     label: "Settings"      },
 ];
 
-// Tabs that show the global stats bar
 const STATS_TABS = new Set(["positions", "performance", "history"]);
 
 // ── Global Stats Bar ───────────────────────────────────────────────────────
+// Uses border-right on items instead of separator divs so nth-child works cleanly on mobile.
 function GlobalStatsBar({ tab, botStatus }) {
   const [stats, setStats] = useState(null);
 
@@ -36,7 +36,7 @@ function GlobalStatsBar({ tab, botStatus }) {
 
   if (!STATS_TABS.has(tab)) return null;
 
-  const s = stats || { netPnl: 0, total: 0, winRate: 0 };
+  const s      = stats || { netPnl: 0, total: 0, winRate: 0 };
   const pnlPos = (s.netPnl || 0) >= 0;
   const online  = botStatus?.ok ?? false;
 
@@ -50,20 +50,17 @@ function GlobalStatsBar({ tab, botStatus }) {
             </span>
             <span className="stats-bar-lbl">Today's PnL</span>
           </div>
-          <div className="stats-bar-sep" />
           <div className="stats-bar-item">
             <span className="stats-bar-val">{s.total || 0}</span>
             <span className="stats-bar-lbl">Trades Today</span>
           </div>
-          <div className="stats-bar-sep" />
           <div className="stats-bar-item">
             <span className="stats-bar-val"
-              style={{ color: (s.winRate || 0) >= 50 ? "#4caf84" : (s.winRate || 0) > 0 ? "#f5a623" : "#ffffff" }}>
+              style={{ color: (s.winRate||0) >= 50 ? "#4caf84" : (s.winRate||0) > 0 ? "#f5a623" : "#ffffff" }}>
               {(s.winRate || 0).toFixed(0)}%
             </span>
             <span className="stats-bar-lbl">Win Rate Today</span>
           </div>
-          <div className="stats-bar-sep" />
           <div className="stats-bar-item">
             <div className="stats-bar-status">
               <div className={"status-dot" + (online ? " online" : " offline")} />
@@ -88,7 +85,6 @@ window.addEventListener("beforeinstallprompt", (e) => {
 
 function InstallBanner() {
   const [show, setShow] = useState(false);
-
   useEffect(() => {
     const check = () => setShow(!!_deferredPrompt);
     check();
@@ -97,14 +93,12 @@ function InstallBanner() {
   }, []);
 
   if (!show) return null;
-
   const install = async () => {
     if (!_deferredPrompt) return;
     _deferredPrompt.prompt();
     const { outcome } = await _deferredPrompt.userChoice;
     if (outcome === "accepted") { _deferredPrompt = null; setShow(false); }
   };
-
   return (
     <div className="install-banner">
       <span className="install-banner-text">Install CopyTradeAI as an app for quick access</span>
@@ -114,7 +108,6 @@ function InstallBanner() {
   );
 }
 
-// ── Service worker registration ────────────────────────────────────────────
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("/sw.js").catch(() => {});
@@ -142,21 +135,19 @@ export default function App() {
           <div className="container">
             <div className="header-inner">
               <div className="header-logo">
-                <div className="logo-mark">
-                  <div className="logo-mark-inner" />
-                </div>
+                <div className="logo-mark"><div className="logo-mark-inner" /></div>
                 <span className="logo-name">CopyTradeAI</span>
               </div>
               <div className="header-right">
                 {status ? (
                   <>
                     <span className={status.paperMode ? "badge-paper" : "badge-live"}>
-                      {status.paperMode ? "Paper Trading" : "Live"}
+                      {status.paperMode ? "Paper" : "Live"}
                     </span>
                     <span className="header-uptime">up {Math.floor(status.uptime / 60)}m</span>
                   </>
                 ) : (
-                  <span className="header-offline">Bot offline</span>
+                  <span className="header-offline">Offline</span>
                 )}
               </div>
             </div>
@@ -164,7 +155,7 @@ export default function App() {
         </header>
 
         <nav className="nav">
-          <div className="container">
+          <div className="container nav-container">
             <div className="nav-inner">
               {TABS.map((t) => (
                 <button
