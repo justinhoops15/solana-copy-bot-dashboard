@@ -373,7 +373,7 @@ body {
 
 /* ── Stats bar status item ───────────────────────────────────────────────── */
 .stats-bar-item--status { position: relative; }
-.stats-bar-val--sm { font-size: 13px; }
+.stats-bar-val--sm { font-size: 13px; white-space: nowrap; }
 
 /* ── WS tooltip ──────────────────────────────────────────────────────────── */
 .ws-tooltip {

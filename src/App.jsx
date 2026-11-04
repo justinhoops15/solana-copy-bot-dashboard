@@ -39,18 +39,40 @@ function formatUptime(seconds) {
   return rem > 0 ? `${h}h ${rem}m` : `${h}h`;
 }
 
-function BotStatusIndicator({ health }) {
+function BotStatusIndicator({ health, healthAt }) {
   const [tooltipVisible, setTooltipVisible] = useState(false);
-  const wsState = health?.wsState || "DISCONNECTED";
+  const [now, setNow] = useState(() => Date.now());
+
+  // health === null means /api/bot-status could not be reached at all
+  const wsState  = health ? health.wsState : "OFFLINE";
+  const counting = wsState === "DEGRADED" && health.nextRetryIn != null;
+
+  // Tick once a second while a retry countdown is on screen
+  useEffect(() => {
+    if (!counting) return;
+    setNow(Date.now());
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [counting, healthAt]);
+
+  const retryIn = counting
+    ? Math.max(0, health.nextRetryIn - Math.floor((now - healthAt) / 1000))
+    : null;
 
   let dotClass  = "ws-dot ws-dot--disconnected";
-  let labelText = "Disconnected";
+  let labelText = "Offline";
   if (wsState === "CONNECTED") {
     dotClass  = "ws-dot ws-dot--connected";
-    labelText = "Connected";
+    labelText = "Live";
   } else if (wsState === "DEGRADED") {
     dotClass  = "ws-dot ws-dot--degraded";
-    labelText = "Degraded";
+    labelText = retryIn > 0 ? `Reconnecting in ${retryIn}s` : "Reconnecting...";
+  } else if (wsState === "RECONNECTING") {
+    dotClass  = "ws-dot ws-dot--degraded";
+    labelText = "Reconnecting...";
+  } else if (wsState === "CONNECTING") {
+    dotClass  = "ws-dot ws-dot--degraded";
+    labelText = "Connecting...";
   }
 
   return (
@@ -83,6 +105,16 @@ function BotStatusIndicator({ health }) {
             <span className="ws-tooltip-key">Uptime</span>
             <span className="ws-tooltip-val">{formatUptime(health.uptimeSeconds || 0)}</span>
           </div>
+          <div className="ws-tooltip-row">
+            <span className="ws-tooltip-key">Last Trade</span>
+            <span className="ws-tooltip-val">{formatRelativeTime(health.lastTradeAt)}</span>
+          </div>
+          {health.reconnectAttempts > 0 && (
+            <div className="ws-tooltip-row ws-tooltip-row--warn">
+              <span className="ws-tooltip-key">Retry attempt</span>
+              <span className="ws-tooltip-val">{health.reconnectAttempts}</span>
+            </div>
+          )}
           {health.pollFallbackActive && (
             <div className="ws-tooltip-row ws-tooltip-row--warn">
               <span className="ws-tooltip-key">Poll fallback</span>
@@ -96,19 +128,31 @@ function BotStatusIndicator({ health }) {
 }
 
 function GlobalStatsBar({ tab }) {
-  const [stats,  setStats]  = useState(null);
-  const [health, setHealth] = useState(null);
+  const [stats,    setStats]    = useState(null);
+  const [health,   setHealth]   = useState(null);
+  const [healthAt, setHealthAt] = useState(0);
+
+  const connected = health?.wsState === "CONNECTED";
 
   useEffect(() => {
     if (!STATS_TABS.has(tab)) return;
-    const loadStats  = () => getPerformance("today").then((d) => setStats(d.stats)).catch(() => {});
-    const loadHealth = () => getBotStatus().then(setHealth).catch(() => {});
+    const loadStats = () => getPerformance("today").then((d) => setStats(d.stats)).catch(() => {});
     loadStats();
-    loadHealth();
-    const statsId  = setInterval(loadStats,  30000);
-    const healthId = setInterval(loadHealth, 30000);
-    return () => { clearInterval(statsId); clearInterval(healthId); };
+    const statsId = setInterval(loadStats, 30000);
+    return () => clearInterval(statsId);
   }, [tab]);
+
+  // Poll status every 30s while live, every 5s while reconnecting or offline
+  useEffect(() => {
+    if (!STATS_TABS.has(tab)) return;
+    const loadHealth = () =>
+      getBotStatus()
+        .then((h) => { setHealth(h); setHealthAt(Date.now()); })
+        .catch(() => { setHealth(null); setHealthAt(Date.now()); });
+    loadHealth();
+    const healthId = setInterval(loadHealth, connected ? 30000 : 5000);
+    return () => clearInterval(healthId);
+  }, [tab, connected]);
 
   if (!STATS_TABS.has(tab)) return null;
 
@@ -136,7 +180,7 @@ function GlobalStatsBar({ tab }) {
             </span>
             <span className="stats-bar-lbl">Win Rate Today</span>
           </div>
-          <BotStatusIndicator health={health} />
+          <BotStatusIndicator health={health} healthAt={healthAt} />
         </div>
       </div>
     </div>

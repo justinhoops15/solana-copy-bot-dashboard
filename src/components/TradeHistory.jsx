@@ -18,10 +18,13 @@ function groupTrades(trades) {
   const map = new Map();
 
   // Sort all trades oldest-first so legs within a group are in chronological order
-  const sorted = [...trades].sort((a, b) => a.executed_at - b.executed_at);
+  const sorted = [...trades].sort((a, b) => a.executed_at - b.executed_at || a.id - b.id);
 
   for (const t of sorted) {
-    const key = `${t.wallet_address}:${t.token_address}`;
+    // One position_id = one independent trade. Legs that are not linked to a
+    // position cannot be attributed to anything, so they are left out.
+    if (t.position_id == null) continue;
+    const key = `p${t.position_id}`;
     if (!map.has(key)) {
       map.set(key, {
         key,
@@ -37,9 +40,10 @@ function groupTrades(trades) {
     if (t.token_symbol) g.token_symbol = t.token_symbol;
   }
 
-  // Keep only closed groups (at least one sell leg)
+  // Keep only closed groups: at least one sell leg, and the buy leg present
+  // (the fetch window can cut a position's oldest leg off)
   const closed = [...map.values()].filter(
-    (g) => g.legs.some((l) => l.action === "sell")
+    (g) => g.legs.some((l) => l.action === "sell") && g.legs.some((l) => l.action === "buy")
   );
 
   // Sort groups by most recent sell, newest first
@@ -52,24 +56,29 @@ function groupTrades(trades) {
   return closed;
 }
 
+// Realized PnL of ONE position: every sell leg is measured against that
+// position's own buy price, and the percentage is relative to the cost of the
+// tokens that were actually sold (partial sells sum correctly).
 function calcPnl(group) {
-  const buys  = group.legs.filter((l) => l.action === "buy");
+  const buy   = group.legs.find((l) => l.action === "buy");
   const sells = group.legs.filter((l) => l.action === "sell");
-  if (!buys.length || !sells.length) return { pnl_usd: 0, pnl_pct: 0 };
+  if (!buy || !sells.length || !(buy.price_usd > 0)) return { pnl_usd: 0, pnl_pct: 0 };
 
-  const buyPrice  = buys[0].price_usd;
-  const buyTokens = buys[0].amount_tokens;
-  if (!buyPrice || buyPrice <= 0) return { pnl_usd: 0, pnl_pct: 0 };
-
-  let totalPnlUsd = 0;
+  let pnlUsd = 0;
+  let soldTokens = 0;
   for (const s of sells) {
-    totalPnlUsd += s.amount_tokens * (s.price_usd - buyPrice);
+    pnlUsd     += s.amount_tokens * (s.price_usd - buy.price_usd);
+    soldTokens += s.amount_tokens;
   }
 
-  const initialValue = buyTokens * buyPrice;
-  const pnl_pct = initialValue > 0 ? (totalPnlUsd / initialValue) * 100 : 0;
+  if (soldTokens > 0) {
+    const cost = soldTokens * buy.price_usd;
+    return { pnl_usd: pnlUsd, pnl_pct: (pnlUsd / cost) * 100 };
+  }
 
-  return { pnl_usd: totalPnlUsd, pnl_pct };
+  // Legacy rows recorded before token amounts were stored: price move only
+  const avgSell = sells.reduce((a, s) => a + s.price_usd, 0) / sells.length;
+  return { pnl_usd: 0, pnl_pct: ((avgSell - buy.price_usd) / buy.price_usd) * 100 };
 }
 
 function pnlClass(val) {
