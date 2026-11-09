@@ -164,6 +164,8 @@ export default function Performance() {
         </div>
       </div>
 
+      <div className="perf-banner">Paper results exclude real-world slippage beyond the configured penalty.</div>
+
       {/* Stats grid */}
       <div className="perf-stats-grid">
         <div className="perf-stat-card perf-stat-card--ring">

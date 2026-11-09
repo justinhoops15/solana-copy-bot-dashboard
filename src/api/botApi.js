@@ -4,7 +4,9 @@ const api = axios.create({ baseURL: "/api", timeout: 8000 });
 
 export const getStatus      = ()             => api.get("/status").then(r => r.data);
 export const getBotStatus   = ()             => api.get("/bot-status").then(r => r.data);
-export const getWallets     = (limit = 20)   => api.get("/wallets", { params: { limit } }).then(r => r.data);
+export const getWallets     = (limit = 100)  => api.get("/wallets", { params: { limit } }).then(r => r.data);
+export const getAttribution = ()             => api.get("/attribution").then(r => r.data);
+export const getWalletEvents = (limit = 12)  => api.get("/wallets/events", { params: { limit } }).then(r => r.data);
 export const getPositions   = ()             => api.get("/positions").then(r => r.data);
 export const getTrades      = (limit = 100)  => api.get("/trades", { params: { limit } }).then(r => r.data);
 export const getSettings    = ()             => api.get("/settings").then(r => r.data);

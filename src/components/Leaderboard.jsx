@@ -1,270 +1,168 @@
-import { useState, useEffect, useCallback } from "react";
-import { getWallets, approveWallet, pinWallet } from "../api/botApi";
+import { useState, useEffect } from "react";
+import { getWallets, getWalletEvents } from "../api/botApi";
+import Attribution from "./Attribution";
+import { pct, signedPct, returnClass } from "./walletFormat";
 
-const MAX_COPYING = 5;
+const STATUS_LABEL = { active: "Active", probation: "Probation", demoted: "Demoted" };
+const FILTERS = [
+  ["all", "All"],
+  ["active", "Active"],
+  ["probation", "Probation"],
+  ["demoted", "Demoted"],
+];
 
-function WinBar({ rate }) {
-  const pct = Math.min(100, Math.max(0, rate * 100));
-  return (
-    <div className="wallet-winrate-cell">
-      <span className="wallet-winrate-pct">{pct.toFixed(1)}%</span>
-      <div className="win-bar-track">
-        <div className="win-bar-fill" style={{ width: pct + "%" }} />
-      </div>
-    </div>
-  );
+function lastTradeText(days) {
+  if (days === null || days === undefined) return "--";
+  if (days === 0) return "today";
+  return days + "d ago";
 }
 
-function ModalWinBar({ rate }) {
-  const pct = Math.min(100, Math.max(0, rate * 100));
-  return (
-    <div className="swap-card-winbar">
-      <span className="swap-card-winrate">{pct.toFixed(1)}%</span>
-      <div className="swap-card-bar-track">
-        <div className="swap-card-bar-fill" style={{ width: pct + "%" }} />
-      </div>
-    </div>
-  );
+function lastTradeClass(days) {
+  if (days === null || days === undefined) return "wl-muted";
+  if (days > 14) return "wl-neg";
+  if (days > 7) return "wl-warn";
+  return "";
 }
 
-function SwapModal({ target, activeWallets, onConfirm, onCancel, busy }) {
-  const [selected, setSelected] = useState(null);
+function eventText(e) {
+  if (e.event === "promoted") return "Promoted to Active";
+  if (e.event === "demoted") return "Demoted";
+  if (e.event === "discovered") return "Entered Probation";
+  if (e.event === "purged") return "Purged";
+  if (e.event === "migrated") return "Legacy cleanup";
+  return e.event;
+}
 
+function WalletRow({ w }) {
+  const short = w.address.length > 12 ? w.address.slice(0, 6) + "..." + w.address.slice(-4) : w.address;
   return (
-    <div className="swap-overlay" onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
-      <div className="swap-modal">
-        <div className="swap-modal-header">
-          <div className="swap-modal-title">Wallet Limit Reached</div>
-          <div className="swap-modal-subtitle">
-            You are already copying {MAX_COPYING} wallets. Select one to replace.
-          </div>
-        </div>
-
-        <div className="swap-modal-body">
-          {activeWallets.map((w) => {
-            const pnl    = parseFloat(w.realized_pnl) || 0;
-            const pinned = !!w.pinned;
-            const auto   = !!w.approved && !pinned;
-            const isSelected = selected?.address === w.address;
-            return (
-              <div
-                key={w.address}
-                className={"swap-wallet-card" + (isSelected ? " selected" : "")}
-                onClick={() => setSelected(w)}
-              >
-                <div className="swap-card-header">
-                  <span className="swap-card-addr">
-                    {w.address.slice(0, 6)}...{w.address.slice(-4)}
-                  </span>
-                  <div className="swap-card-badges">
-                    {pinned && <span className="badge-pinned">PINNED</span>}
-                    {auto   && <span className="badge-auto">AUTO</span>}
-                  </div>
-                </div>
-
-                <ModalWinBar rate={w.win_rate} />
-
-                <div className="swap-card-stats">
-                  <div className="swap-card-stat">
-                    <div className="swap-card-stat-lbl">Score</div>
-                    <div className="swap-card-stat-val swap-card-stat-val--score">{w.score.toFixed(1)}</div>
-                  </div>
-                  <div className="swap-card-stat">
-                    <div className="swap-card-stat-lbl">Trades</div>
-                    <div className="swap-card-stat-val">{w.trade_count.toLocaleString()}</div>
-                  </div>
-                  <div className="swap-card-stat">
-                    <div className="swap-card-stat-lbl">Realized PnL</div>
-                    <div className="swap-card-stat-val swap-card-stat-val--pos">
-                      ${Math.abs(pnl).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="swap-modal-footer">
-          <button
-            className="btn-swap-confirm"
-            disabled={!selected || busy}
-            onClick={() => selected && onConfirm(selected)}
-          >
-            {busy ? "Swapping..." : "Swap Wallet"}
-          </button>
-          <button className="btn-swap-cancel" onClick={onCancel} disabled={busy}>
-            Cancel
-          </button>
-        </div>
+    <div className={"wl-row wl-row--" + w.status}>
+      <div className="wl-cell wl-cell--status">
+        <span className={"wl-status wl-status--" + w.status}>{STATUS_LABEL[w.status] || w.status}</span>
       </div>
+
+      <div className="wl-cell wl-cell--wallet">
+        <a href={"https://solscan.io/account/" + w.address} target="_blank" rel="noopener noreferrer" className="wallet-addr">
+          {short}
+        </a>
+        <span className="wl-sub">
+          {w.source ? w.source.replace(/,/g, " + ") : "legacy"} · score {w.score !== null && w.score !== undefined ? w.score.toFixed(1) : "--"}
+        </span>
+      </div>
+
+      <div className="wl-cell">
+        <span className={"wl-val " + lastTradeClass(w.daysSinceLastTrade)}>{lastTradeText(w.daysSinceLastTrade)}</span>
+        <span className="wl-lbl">Last trade</span>
+      </div>
+
+      <div className="wl-cell">
+        <span className="wl-val">{pct(w.winRate30d)}</span>
+        <span className="wl-lbl">30d win rate</span>
+      </div>
+
+      <div className="wl-cell">
+        <span className={"wl-val " + returnClass(w.shadow.netReturn)}>{signedPct(w.shadow.netReturn)}</span>
+        <span className="wl-lbl">Shadow net ({w.shadow.n})</span>
+      </div>
+
+      <div className="wl-cell">
+        <span className={"wl-val " + returnClass(w.copied.netReturn)}>{signedPct(w.copied.netReturn)}</span>
+        <span className="wl-lbl">Copied net ({w.copied.n})</span>
+      </div>
+
+      {w.status === "demoted" && w.demotionReason && (
+        <div className="wl-reason">Demoted: {w.demotionReason}</div>
+      )}
     </div>
   );
 }
 
 export default function Leaderboard() {
-  const [wallets,     setWallets]     = useState([]);
-  const [loading,     setLoading]     = useState(true);
-  const [swapTarget,  setSwapTarget]  = useState(null);
-  const [swapBusy,    setSwapBusy]    = useState(false);
-  const [toastVisible, setToastVisible] = useState(false);
-
-  const load = useCallback(() =>
-    getWallets(20).then(setWallets).catch(console.error).finally(() => setLoading(false)),
-  []);
+  const [view, setView]       = useState("wallets");
+  const [filter, setFilter]   = useState("all");
+  const [wallets, setWallets] = useState([]);
+  const [events, setEvents]   = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const load = () => {
+      getWallets(100).then(setWallets).catch(console.error).finally(() => setLoading(false));
+      getWalletEvents(12).then(setEvents).catch(() => {});
+    };
     load();
     const id = setInterval(load, 60000);
     return () => clearInterval(id);
-  }, [load]);
-
-  const showToast = () => {
-    setToastVisible(true);
-    setTimeout(() => setToastVisible(false), 3000);
-  };
-
-  const toggle = async (w) => {
-    if (w.approved) {
-      await approveWallet(w.address, false);
-      load();
-      return;
-    }
-    const activeWallets = wallets.filter((x) => x.approved);
-    if (activeWallets.length >= MAX_COPYING) {
-      setSwapTarget(w);
-      return;
-    }
-    await approveWallet(w.address, true);
-    load();
-  };
-
-  const togglePin = async (w) => {
-    await pinWallet(w.address, !w.pinned);
-    load();
-  };
-
-  const handleSwapConfirm = async (walletToReplace) => {
-    setSwapBusy(true);
-    try {
-      await approveWallet(walletToReplace.address, false);
-      await approveWallet(swapTarget.address, true);
-      setSwapTarget(null);
-      await load();
-      showToast();
-    } catch (err) {
-      console.error("Swap failed:", err);
-    } finally {
-      setSwapBusy(false);
-    }
-  };
-
-  const handleSwapCancel = () => {
-    if (!swapBusy) setSwapTarget(null);
-  };
+  }, []);
 
   if (loading) return <div className="loading">Loading wallets...</div>;
 
-  const activeWallets = wallets.filter((w) => w.approved);
+  const counts = { active: 0, probation: 0, demoted: 0 };
+  wallets.forEach((w) => { if (counts[w.status] !== undefined) counts[w.status]++; });
+  const shown = filter === "all" ? wallets : wallets.filter((w) => w.status === filter);
 
   return (
     <div>
-      <div className="section-head">
-        <span className="section-title">Wallets</span>
-        <span className="section-count">{wallets.length} scored</span>
-      </div>
-
-      <div className="lb-col-head">
-        <span>#</span>
-        <span>Address</span>
-        <span>Win Rate</span>
-        <span>Score</span>
-        <span>Trades</span>
-        <span>Realized PnL</span>
-        <span></span>
-      </div>
-
-      {wallets.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-title">No wallets scored yet</div>
-          <div className="empty-state-sub">Run npm run score inside /bot to populate this list</div>
+      <div className="section-head wl-section-head">
+        <div className="wl-title-group">
+          <span className="section-title">Wallets</span>
+          <span className="section-count">
+            {counts.active} active · {counts.probation} probation · {counts.demoted} demoted
+          </span>
         </div>
+        <div className="wl-switch">
+          <button className={"wl-switch-btn" + (view === "wallets" ? " active" : "")} onClick={() => setView("wallets")}>Wallets</button>
+          <button className={"wl-switch-btn" + (view === "attribution" ? " active" : "")} onClick={() => setView("attribution")}>Attribution</button>
+        </div>
+      </div>
+
+      {view === "attribution" ? (
+        <Attribution />
       ) : (
-        <div className="wallet-list">
-          {wallets.map((w, i) => {
-            const pnl    = parseFloat(w.realized_pnl) || 0;
-            const pinned = !!w.pinned;
-            const auto   = !!w.approved && !pinned;
-            return (
-              <div key={w.address} className={"wallet-row" + (w.approved ? " approved" : "")}>
+        <>
+          <div className="wl-filters">
+            {FILTERS.map(([key, label]) => (
+              <button key={key} className={"wl-switch-btn" + (filter === key ? " active" : "")} onClick={() => setFilter(key)}>
+                {label}{key !== "all" ? " " + counts[key] : ""}
+              </button>
+            ))}
+          </div>
 
-                <span className="wallet-rank">{i + 1}</span>
-
-                <div className="wallet-addr-col">
-                  <a
-                    href={"https://solscan.io/account/" + w.address}
-                    target="_blank" rel="noopener noreferrer"
-                    className="wallet-addr"
-                  >
-                    {w.address.slice(0, 6)}...{w.address.slice(-4)}
-                  </a>
-                  {pinned && <span className="badge-pinned">PINNED</span>}
-                  {auto   && <span className="badge-auto">AUTO</span>}
-                </div>
-
-                <WinBar rate={w.win_rate} />
-
-                <div className="wallet-row-meta">
-                  <div className="wallet-cell">
-                    <div className="wallet-cell-val wallet-cell-val--score">{w.score.toFixed(1)}</div>
-                    <div className="wallet-cell-lbl">Score</div>
-                  </div>
-                  <div className="wallet-cell">
-                    <div className="wallet-cell-val">{w.trade_count.toLocaleString()}</div>
-                    <div className="wallet-cell-lbl">Trades</div>
-                  </div>
-                  <div className="wallet-cell">
-                    <div className="wallet-cell-val pos">
-                      ${Math.abs(pnl).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                    </div>
-                    <div className="wallet-cell-lbl">Realized</div>
-                  </div>
-                </div>
-
-                <div className="wallet-row-actions">
-                  <button
-                    className={"btn-pin" + (pinned ? " pinned" : "")}
-                    onClick={() => togglePin(w)}
-                    title={pinned ? "Unpin wallet" : "Pin wallet (always copy)"}
-                  >
-                    📌
-                  </button>
-                  <button
-                    className={"btn-copy" + (w.approved ? " copying" : "")}
-                    onClick={() => toggle(w)}
-                  >
-                    {w.approved ? "Copying" : "Copy"}
-                  </button>
-                </div>
-
+          {shown.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-title">No wallets in this view</div>
+              <div className="empty-state-sub">The nightly discovery run adds new candidates to Probation</div>
+            </div>
+          ) : (
+            <>
+              <div className="wl-head">
+                <span>Status</span>
+                <span>Wallet</span>
+                <span>Last trade</span>
+                <span>30d win rate</span>
+                <span>Shadow net</span>
+                <span>Copied net</span>
               </div>
-            );
-          })}
-        </div>
-      )}
+              <div className="wl-list">
+                {shown.map((w) => <WalletRow key={w.address} w={w} />)}
+              </div>
+            </>
+          )}
 
-      {swapTarget && (
-        <SwapModal
-          target={swapTarget}
-          activeWallets={activeWallets}
-          onConfirm={handleSwapConfirm}
-          onCancel={handleSwapCancel}
-          busy={swapBusy}
-        />
-      )}
-
-      {toastVisible && (
-        <div className="swap-toast">Wallet swapped successfully</div>
+          {events.length > 0 && (
+            <div className="wl-events">
+              <div className="wl-events-title">Recent changes</div>
+              {events.map((e, i) => (
+                <div key={i} className="wl-event">
+                  <span className="wl-event-time">{new Date(e.ts * 1000).toLocaleDateString([], { month: "short", day: "numeric" })}</span>
+                  <span className="wl-event-what">
+                    {e.address.length > 12 ? e.address.slice(0, 6) + "..." + e.address.slice(-4) : e.address} · {eventText(e)}
+                  </span>
+                  <span className="wl-event-why">{e.reason}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
